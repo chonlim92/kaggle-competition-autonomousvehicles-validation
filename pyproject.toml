@@ -58,7 +58,6 @@ ignore = ["ANN101", "ANN102"]
 ignore_missing_imports = true
 python_version = "3.11"
 strict = true
-ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
