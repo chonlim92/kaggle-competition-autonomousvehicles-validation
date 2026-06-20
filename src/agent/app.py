@@ -153,13 +153,13 @@ COMPLIANCE_MODEL = "gemini-1.5-pro"
 # System prompt for the compliance audit agent (Tab 2).
 # Note: this prompt instructs the model to output a FORMAL corporate report.
 # It is paired with the PURIFIED (PII-free) log context — never raw user input.
-COMPLIANCE_SYSTEM_PROMPT = """You are a Senior Autonomous Vehicle Safety Compliance Officer 
+COMPLIANCE_SYSTEM_PROMPT = """You are a Senior Autonomous Vehicle Safety Compliance Officer
 generating an official corporate audit report for a fleet operations board.
 
 MANDATORY BEHAVIOUR:
 1. Your input is a PURIFIED log excerpt. All PII has already been redacted by the enterprise
-   security layer. Treat redaction placeholders ([DRIVER_REDACTED], [PLATE_REDACTED], 
-   [GPS_REDACTED]) as the authoritative representation of those fields — never speculate 
+   security layer. Treat redaction placeholders ([DRIVER_REDACTED], [PLATE_REDACTED],
+   [GPS_REDACTED]) as the authoritative representation of those fields — never speculate
    about the original values.
 2. Cross-reference observations against the active safety rules:
    - AV-REG-101: Intersection velocity thresholds (WARN / ALERT / OVERRIDE breach levels)
@@ -362,7 +362,7 @@ def generate_synthetic_log() -> tuple[str, str, str]:
 
         all_logs_text = []
         all_meta_display = []
-        
+
         # Center map on Los Angeles
         m = folium.Map(location=[34.0522, -118.2437], zoom_start=10)
 
@@ -371,7 +371,7 @@ def generate_synthetic_log() -> tuple[str, str, str]:
             meta = result["metadata"]
             pii = meta["injected_pii"]
             event_id = pii.get("event_id", "unknown")
-            
+
             _EVENT_STORE[event_id] = pii
 
             meta_display = (
@@ -382,10 +382,10 @@ def generate_synthetic_log() -> tuple[str, str, str]:
                 f"  Witness plate: {pii['plate_witness']}\n"
                 f"  GPS primary  : {pii['gps_primary']['lat']}, {pii['gps_primary']['lon']}  [{pii['gps_primary']['region']}]\n"
             )
-            
+
             all_logs_text.append(f"--- LOG {i} ---\n{log_text}\n")
             all_meta_display.append(meta_display)
-            
+
             # Plot on map
             tooltip_text = (
                 f"<b>Event ID:</b> {event_id}<br>"
@@ -406,7 +406,7 @@ def generate_synthetic_log() -> tuple[str, str, str]:
             f"INJECTED PII (ground truth for evaluation):\n\n"
             + "\n".join(all_meta_display)
         )
-        
+
         map_html = m._repr_html_()
 
         logger.info("Tab 1: batch generated", count=len(results), elapsed=f"{elapsed:.2f}s")
@@ -443,13 +443,13 @@ def _fetch_google_maps_context(lat: float, lon: float) -> dict:
         r_resp = requests.get(roads_url, timeout=5).json()
         if "speedLimits" in r_resp and len(r_resp["speedLimits"]) > 0:
             context["speed_limit"] = str(r_resp["speedLimits"][0].get("speedLimit", "Unknown")) + " km/h"
-            
+
         weather_url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true"
         w_resp = requests.get(weather_url, timeout=5).json()
         if "current_weather" in w_resp:
             cw = w_resp["current_weather"]
             context["weather"] = f"{cw.get('temperature')}°C, Wind {cw.get('windspeed')} km/h"
-            
+
         context["street_view_iframe"] = f"https://www.google.com/maps/embed/v1/streetview?key={api_key}&location={lat},{lon}&heading=210&pitch=10&fov=35"
     except Exception:
         pass
@@ -523,7 +523,7 @@ def run_secure_validation(raw_log_text: str, session_id: str) -> tuple[str, str,
     lon = None
     map_context = {}
     street_view_html = ""
-    
+
     if event_id_match:
         event_id = event_id_match.group(0)
         if event_id in _EVENT_STORE:
@@ -531,7 +531,7 @@ def run_secure_validation(raw_log_text: str, session_id: str) -> tuple[str, str,
             lat = pii_data['gps_primary']['lat']
             lon = pii_data['gps_primary']['lon']
             map_context = _fetch_google_maps_context(lat, lon)
-            
+
             enrichment_block = (
                 f"\n\n--- ENRICHED ENVIRONMENT CONTEXT (Obtained securely, original GPS coordinates masked) ---\n"
                 f"Road Name: {map_context.get('road_name')}\n"
@@ -543,7 +543,7 @@ def run_secure_validation(raw_log_text: str, session_id: str) -> tuple[str, str,
                 f"--------------------------------------------------------------------------------------\n"
             )
             purified_context += enrichment_block
-            
+
             if map_context.get("street_view_iframe"):
                 street_view_html = f"<div style='margin-top: 15px;'><iframe width='100%' height='300' src='{map_context['street_view_iframe']}' frameborder='0' style='border:0' allowfullscreen></iframe></div>"
 
@@ -578,10 +578,10 @@ def run_secure_validation(raw_log_text: str, session_id: str) -> tuple[str, str,
         f"| LLM inference: {adk_elapsed:.2f}s "
         f"| Model: {COMPLIANCE_MODEL}*"
     )
-    
+
     # Create map
     map_html = ""
-    
+
     if event_id:
         if lat is not None and lon is not None:
             # Determine color based on audit report
@@ -590,14 +590,14 @@ def run_secure_validation(raw_log_text: str, session_id: str) -> tuple[str, str,
                 marker_color = "red"
             elif "HIGH" in adk_response.upper():
                 marker_color = "orange"
-                
+
             m = folium.Map(location=[lat, lon], zoom_start=14)
             county = map_context.get("county", "Unknown")
             road_name = map_context.get("road_name", "Unknown")
             weather = map_context.get("weather", "Unknown")
             speed_limit = map_context.get("speed_limit", "Unknown")
             lanes = map_context.get("lanes", "Unknown")
-            
+
             tooltip_text = (
                 f"<b>Event ID:</b> {event_id}<br>"
                 f"<b>Driver:</b> [MASKED]<br>"
@@ -678,7 +678,7 @@ def execute_evaluation_suite() -> str:
         suite1_passed = 0
         for case in cases:
             total_tests += 1
-            case_id = case.get("id", "?")
+            event_id = case.get("event_id", "?")
             raw_input = case.get("input", "")
             pii_strings: list[str] = case.get("pii_strings", [])
 
@@ -698,7 +698,7 @@ def execute_evaluation_suite() -> str:
 
             summary_dict = clean_result["redaction_summary"]
             results.append(
-                f"  {icon} [{case_id:15s}]  "
+                f"  {icon} [{event_id:15s}]  "
                 f"redacted={summary_dict['total']:2d}  "
                 f"missed_pii={len(missed)}  "
                 f"tags={case.get('tags', [])}"
@@ -1161,10 +1161,10 @@ with gr.Blocks(  # pragma: no cover
             label="📄 Audited Corporate Compliance Report  [ Stage 2 — gemini-1.5-pro output ]",
             value="> ⬆️ Paste a log and click **Run Safe Validation Audit** to generate the compliance report.",
         )
-        
+
         with gr.Row():
             tab2_map = gr.HTML(label="Validation GPS Plot")
-            
+
         gr.Markdown("""
         *⚠️ Note: The GPS location plotted above was redacted and hidden from the LLM model for privacy reasons. It was retrieved securely via Event ID from the raw input exclusively for this map display.*
         """)

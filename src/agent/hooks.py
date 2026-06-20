@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import structlog
-from google.adk.agents import AgentHook, AgentRequest, AgentResponse
+from google.adk.agents.hooks import Hook
+from google.adk.agents.agent import AgentRequest, AgentResponse
 from src.skills.pii_redactor.enterprise_av_security_pii_cleaner import clean_pii
 
 logger = structlog.get_logger(__name__)
 
-class PIIEnforcementHook(AgentHook):
+class PIIEnforcementHook(Hook):
     """
     AgentHook that acts as a final safety check before allowing an LLM request to proceed.
     It verifies that the prompt payload does NOT contain any raw PII (such as driver names,

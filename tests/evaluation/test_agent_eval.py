@@ -154,14 +154,14 @@ class TestPIIEvalDataset:
 
         failures: list[str] = []
         for case in pii_eval_dataset:
-            case_id = case.get("id", "unknown")
+            event_id = case.get("event_id", "unknown")
             input_text = case.get("input", "")
             pii_to_check = case.get("pii_strings", [])  # list of strings that should be gone
 
             result = pii_redactor.redact(input_text)
             for pii_str in pii_to_check:
                 if pii_str in result.redacted_text:
-                    failures.append(f"[{case_id}] '{pii_str}' was NOT redacted")
+                    failures.append(f"[{event_id}] '{pii_str}' was NOT redacted")
 
         assert not failures, "PII redaction failures:\n" + "\n".join(failures)
 
