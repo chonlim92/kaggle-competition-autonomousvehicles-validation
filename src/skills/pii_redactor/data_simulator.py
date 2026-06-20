@@ -91,13 +91,13 @@ _DRIVER_NAME_SEEDS = [
     "Amara Diallo",
 ]
 
-# GPS coordinate regions (San Francisco Bay Area for realism)
+# GPS coordinate regions (Los Angeles area for realism)
 _GPS_REGIONS = [
-    {"name": "downtown_sf", "lat_range": (37.770, 37.790), "lon_range": (-122.425, -122.400)},
-    {"name": "mission_district", "lat_range": (37.745, 37.765), "lon_range": (-122.430, -122.405)},
-    {"name": "soma", "lat_range": (37.770, 37.782), "lon_range": (-122.415, -122.390)},
-    {"name": "financial_district", "lat_range": (37.790, 37.798), "lon_range": (-122.402, -122.390)},
-    {"name": "marina", "lat_range": (37.800, 37.810), "lon_range": (-122.443, -122.430)},
+    {"name": "downtown_la", "lat_range": (34.040, 34.060), "lon_range": (-118.260, -118.240)},
+    {"name": "santa_monica", "lat_range": (34.010, 34.030), "lon_range": (-118.500, -118.480)},
+    {"name": "hollywood", "lat_range": (34.090, 34.110), "lon_range": (-118.340, -118.320)},
+    {"name": "pasadena", "lat_range": (34.140, 34.160), "lon_range": (-118.150, -118.130)},
+    {"name": "long_beach", "lat_range": (33.760, 33.780), "lon_range": (-118.200, -118.180)},
 ]
 
 
@@ -116,6 +116,7 @@ def _build_generation_prompt(
     lon2: float,
     timestamp: str,
     fleet_unit: str,
+    event_id: str,
 ) -> str:
     """
     Construct the Gemini generation prompt for a single disengagement log.
@@ -151,6 +152,9 @@ naturally in the text (not as a structured list):
    - A secondary waypoint or recovery position: {lat2:.6f}, {lon2:.6f}
    - Use different notation for each: one as a bare decimal pair, one with a
      label like "GPS:", "lat/lon:", "pos:", "coord:", or "location:"
+
+4. EVENT ID: {event_id}
+   - Must explicitly include "Event ID: {event_id}" somewhere in the log.
 
 SCENARIO: {scenario}
 
@@ -259,6 +263,9 @@ class AVDisengagementLogSimulator:
 
         now = datetime.now(timezone.utc)
         timestamp = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+        
+        import uuid
+        event_id = f"EVT-{uuid.uuid4().hex[:8].upper()}"
 
         prompt = _build_generation_prompt(
             scenario=scenario,
@@ -271,6 +278,7 @@ class AVDisengagementLogSimulator:
             lon2=lon2,
             timestamp=timestamp,
             fleet_unit=fleet_unit,
+            event_id=event_id,
         )
 
         logger.debug(
@@ -287,6 +295,7 @@ class AVDisengagementLogSimulator:
         metadata = {
             "scenario": scenario,
             "injected_pii": {
+                "event_id": event_id,
                 "driver_name": driver_name,
                 "plate_primary": plate_1,
                 "plate_witness": plate_2,

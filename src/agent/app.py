@@ -55,14 +55,17 @@ from __future__ import annotations
 
 import asyncio
 import json
+import asyncio
 import os
-import sys
 import time
+import re
+import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 import gradio as gr
 import structlog
+import folium
 from dotenv import load_dotenv
 
 # ── Project root path resolution ──────────────────────────────────────────────
@@ -77,6 +80,13 @@ sys.path.insert(0, str(_PROJECT_ROOT))
 # Load environment variables BEFORE any google.adk or google.generativeai imports.
 # Using override=False so that pre-set env vars (CI, Docker) take precedence over .env
 load_dotenv(dotenv_path=_PROJECT_ROOT / ".env", override=False)
+
+# ── Globals & State ───────────────────────────────────────────────────────────
+
+# In-memory dictionary storing mapping of eventid to ground-truth GPS and PII.
+# Tab 1 generates these, Tab 2 reads them securely to render the map without
+# passing the PII to the LLM.
+_EVENT_STORE = {}
 
 # ── Structured logging ─────────────────────────────────────────────────────────
 # Using structlog for machine-parseable output — critical for production audit trails.
@@ -209,7 +219,7 @@ if _GENAI_AVAILABLE:
 # High temperature (0.95) is used to produce diverse, realistic log text.
 # This simulator is intentionally separate from the compliance model — the
 # flash model is cheaper and faster for creative data generation tasks.
-_simulator: AVDisengagementLogSimulator | None = None
+_simulator: Optional[object] = None
 if _SIM_GENAI_AVAILABLE:
     try:
         _simulator = AVDisengagementLogSimulator(
@@ -332,21 +342,9 @@ async def _run_adk_agent(message: str, session_id: str) -> str:
 # TAB 1 BACKEND — Synthetic Data Generation Engine
 # ==============================================================================
 
-def generate_synthetic_log() -> tuple[str, str]:
+def generate_synthetic_log() -> tuple[str, str, str]:
     """
-    Tab 1 action handler: Generate a fresh synthetic AV disengagement log.
-
-    Data flow:
-      Gradio button click
-          └─► AVDisengagementLogSimulator.generate()   [gemini-1.5-flash]
-                  ├─► random scenario seed selection
-                  ├─► random driver name, plates, GPS coordinates
-                  ├─► Gemini prompt → messy prose log with embedded PII
-                  └─► returns {log_text, metadata.injected_pii}
-          └─► log_text + metadata summary → displayed in Gradio textboxes
-
-    Returns:
-        Tuple of (log_text, metadata_display_string) for Gradio Outputs.
+    Tab 1 action handler: Generate a fresh batch of synthetic AV disengagement logs.
     """
     if _simulator is None:
         err = (
@@ -354,89 +352,115 @@ def generate_synthetic_log() -> tuple[str, str]:
             "Ensure GEMINI_API_KEY is set in .env and google-generativeai is installed:\n"
             "  pip install google-generativeai"
         )
-        return err, ""
+        return err, "", ""
 
     try:
-        logger.info("Tab 1: generating synthetic log")
+        logger.info("Tab 1: generating synthetic log batch")
         t0 = time.perf_counter()
-        result = _simulator.generate()
+        results = _simulator.generate_batch(count=5)
         elapsed = time.perf_counter() - t0
 
-        log_text: str = result["log_text"]
-        meta = result["metadata"]
-        pii = meta["injected_pii"]
+        all_logs_text = []
+        all_meta_display = []
+        
+        # Center map on Los Angeles
+        m = folium.Map(location=[34.0522, -118.2437], zoom_start=10)
 
-        # Build the metadata summary shown alongside the log text.
-        # This exposes the ground truth PII injected by the simulator so the user
-        # can verify it appears in the raw text (before cleaning in Tab 2).
-        meta_display = (
-            f"✅ Log generated in {elapsed:.2f}s  |  Model: {result['model']}\n"
+        for i, result in enumerate(results, 1):
+            log_text: str = result["log_text"]
+            meta = result["metadata"]
+            pii = meta["injected_pii"]
+            event_id = pii.get("event_id", "unknown")
+            
+            _EVENT_STORE[event_id] = pii
+
+            meta_display = (
+                f"--- LOG {i} ---\n"
+                f"Event ID: {event_id}\n"
+                f"  Driver name  : {pii['driver_name']}\n"
+                f"  Primary plate: {pii['plate_primary']}\n"
+                f"  Witness plate: {pii['plate_witness']}\n"
+                f"  GPS primary  : {pii['gps_primary']['lat']}, {pii['gps_primary']['lon']}  [{pii['gps_primary']['region']}]\n"
+            )
+            
+            all_logs_text.append(f"--- LOG {i} ---\n{log_text}\n")
+            all_meta_display.append(meta_display)
+            
+            # Plot on map
+            tooltip_text = (
+                f"<b>Event ID:</b> {event_id}<br>"
+                f"<b>Driver:</b> {pii['driver_name']}<br>"
+                f"<b>Unit:</b> {pii['plate_primary']}<br>"
+                f"<b>Scenario:</b> {meta['scenario'][:60]}..."
+            )
+            folium.Marker(
+                [pii['gps_primary']['lat'], pii['gps_primary']['lon']],
+                tooltip=tooltip_text,
+                icon=folium.Icon(color="blue", icon="info-sign")
+            ).add_to(m)
+
+        final_log_text = "\n".join(all_logs_text)
+        final_meta_text = (
+            f"✅ Batch generated in {elapsed:.2f}s  |  Model: {results[0]['model']}\n"
             f"{'─'*60}\n"
-            f"INJECTED PII (ground truth for evaluation):\n"
-            f"  Driver name  : {pii['driver_name']}\n"
-            f"  Primary plate: {pii['plate_primary']}\n"
-            f"  Witness plate: {pii['plate_witness']}\n"
-            f"  GPS primary  : {pii['gps_primary']['lat']}, {pii['gps_primary']['lon']}  [{pii['gps_primary']['region']}]\n"
-            f"  GPS secondary: {pii['gps_secondary']['lat']}, {pii['gps_secondary']['lon']}  [{pii['gps_secondary']['region']}]\n"
-            f"  Fleet unit   : {meta['fleet_unit']}\n"
-            f"  Scenario     : {meta['scenario'][:80]}...\n"
+            f"INJECTED PII (ground truth for evaluation):\n\n"
+            + "\n".join(all_meta_display)
         )
+        
+        map_html = m._repr_html_()
 
-        logger.info("Tab 1: log generated", char_count=len(log_text), elapsed=f"{elapsed:.2f}s")
-        return log_text, meta_display
+        logger.info("Tab 1: batch generated", count=len(results), elapsed=f"{elapsed:.2f}s")
+        return final_log_text, final_meta_text, map_html
 
     except Exception as exc:
         logger.error("Tab 1: generation failed", error=str(exc))
-        return f"❌ Generation failed: {exc}", ""
+        return f"❌ Generation failed: {exc}", "", ""
 
 
 # ==============================================================================
 # TAB 2 BACKEND — Secure Validation Audit Portal
 # ==============================================================================
 
-def run_secure_validation(raw_log_text: str, session_id: str) -> tuple[str, str, str]:
+def _fetch_google_maps_context(lat: float, lon: float) -> dict:
+    import requests
+    api_key = "AIzaSyD2ZOFDD1iGQ-pvTbdhXiuFxcmL1wS0umY"
+    context = {"county": "Unknown", "speed_limit": "Unknown", "lanes": "Unknown"}
+    try:
+        geo_url = f"https://maps.googleapis.com/maps/api/geocode/json?latlng={lat},{lon}&key={api_key}"
+        resp = requests.get(geo_url, timeout=5).json()
+        if resp.get("status") == "OK":
+            for result in resp.get("results", []):
+                for component in result.get("address_components", []):
+                    types = component.get("types", [])
+                    if "administrative_area_level_2" in types:
+                        context["county"] = component.get("long_name")
+                        break
+                if context["county"] != "Unknown":
+                    break
+        roads_url = f"https://roads.googleapis.com/v1/speedLimits?path={lat},{lon}&key={api_key}"
+        r_resp = requests.get(roads_url, timeout=5).json()
+        if "speedLimits" in r_resp and len(r_resp["speedLimits"]) > 0:
+            context["speed_limit"] = str(r_resp["speedLimits"][0].get("speedLimit", "Unknown")) + " km/h"
+    except Exception:
+        pass
+    return context
+
+
+def run_secure_validation(raw_log_text: str, session_id: str) -> tuple[str, str, str, str]:
     """
     Tab 2 action handler: PII cleaning → ADK compliance agent → report.
-
-    DATA FLOW (two-stage, defence-in-depth):
-
-    Stage 1 — Deterministic PII Sanitisation (zero LLM involvement):
-      raw_log_text
-          └─► enterprise_av_security_pii_cleaner.clean_pii()
-                  ├─► Pass 1: GPS coordinate pairs → [GPS_REDACTED]
-                  ├─► Pass 2: Licence plates       → [PLATE_REDACTED]
-                  └─► Pass 3: Driver names         → [DRIVER_REDACTED]
-          └─► purified_context (displayed in "Purified Outbound Prompt Context" box)
-          └─► redaction_summary (driver_names, licence_plates, gps_coordinates, total)
-
-    Stage 2 — LLM Compliance Analysis (receives ONLY purified text):
-      purified_context
-          └─► ADK Runner (av_compliance_agent, gemini-1.5-pro)
-                  ├─► COMPLIANCE_SYSTEM_PROMPT instructs formal corporate report format
-                  ├─► AV-REG-101/102 cross-reference
-                  └─► GR-TONE guardrail (objective language, third person)
-          └─► compliance_report_markdown (displayed in final Markdown panel)
-
-    SECURITY GUARANTEE: The LLM NEVER sees raw_log_text.
-    The purified_context is the boundary — nothing crosses it without being cleaned.
-
-    Args:
-        raw_log_text: Raw log text pasted by user (may contain PII).
-        session_id: Gradio session state identifier for ADK session isolation.
-
     Returns:
-        Tuple of (redaction_status_banner, purified_context, compliance_report_md).
+        Tuple of (redaction_status_banner, purified_context, compliance_report_md, map_html).
     """
     if not raw_log_text or not raw_log_text.strip():
         return (
             "⚠️ No input provided. Paste a log into the text field first.",
             "",
             "",
+            "",
         )
 
     # ── Stage 1: Deterministic PII Cleaning ───────────────────────────────────
-    # This stage is synchronous, fast (pure regex), and produces an auditable
-    # summary of exactly what was redacted and where.
     logger.info("Tab 2: Stage 1 — running enterprise PII cleaner")
     t0 = time.perf_counter()
     clean_result = clean_pii(raw_log_text)
@@ -447,8 +471,6 @@ def run_secure_validation(raw_log_text: str, session_id: str) -> tuple[str, str,
     pii_found: bool = clean_result["pii_found"]
     details = clean_result.get("redaction_details", [])
 
-    # Build the redaction status banner shown above the purified context box.
-    # Uses visual indicators to make the security status immediately legible.
     if pii_found:
         status_icon = "🔒"
         status_msg = f"SECURED — {summary['total']} PII entity/entities redacted"
@@ -457,7 +479,7 @@ def run_secure_validation(raw_log_text: str, session_id: str) -> tuple[str, str,
         status_msg = "CLEAN — No PII patterns detected in input"
 
     detail_lines = []
-    for d in details[:10]:  # Cap at 10 entries to avoid UI overflow
+    for d in details[:10]:
         detail_lines.append(
             f"  [{d['type']:20s}] pattern={d['pattern']:20s} pos={d['position']}"
         )
@@ -485,10 +507,6 @@ def run_secure_validation(raw_log_text: str, session_id: str) -> tuple[str, str,
     )
 
     # ── Stage 2: ADK Compliance Report Generation ─────────────────────────────
-    # The purified_context (PII-free) is sent to the ADK compliance agent.
-    # asyncio.run() bridges Gradio's sync handler into the ADK async runner.
-    # Note: Gradio 4.x supports async event handlers natively; we use asyncio.run()
-    # here for compatibility with mixed sync/async environments.
     logger.info("Tab 2: Stage 2 — dispatching to ADK compliance agent", model=COMPLIANCE_MODEL)
 
     if not _ADK_AVAILABLE or _adk_runner is None:
@@ -498,12 +516,10 @@ def run_secure_validation(raw_log_text: str, session_id: str) -> tuple[str, str,
             "**Purified log context (ready for manual review):**\n\n"
             f"```\n{purified_context}\n```"
         )
-        return redaction_banner, purified_context, compliance_report
+        return redaction_banner, purified_context, compliance_report, ""
 
     t1 = time.perf_counter()
 
-    # Use the session_id from Gradio state to isolate each user's ADK session.
-    # A new session_id is generated per user tab load (see demo.load() below).
     adk_response = asyncio.run(_run_adk_agent(purified_context, session_id))
     adk_elapsed = time.perf_counter() - t1
 
@@ -513,8 +529,6 @@ def run_secure_validation(raw_log_text: str, session_id: str) -> tuple[str, str,
         response_chars=len(adk_response),
     )
 
-    # Append an audit footer to the compliance report markdown.
-    # This makes every report self-documenting with its provenance metadata.
     compliance_report = (
         f"{adk_response}\n\n"
         f"---\n"
@@ -523,8 +537,55 @@ def run_secure_validation(raw_log_text: str, session_id: str) -> tuple[str, str,
         f"| LLM inference: {adk_elapsed:.2f}s "
         f"| Model: {COMPLIANCE_MODEL}*"
     )
+    
+    # Extract Event ID and create map
+    event_id_match = re.search(r"EVT-[0-9A-F]{8}", raw_log_text)
+    map_html = ""
+    
+    if event_id_match:
+        event_id = event_id_match.group(0)
+        
+        if event_id in _EVENT_STORE:
+            pii_data = _EVENT_STORE[event_id]
+            lat = pii_data['gps_primary']['lat']
+            lon = pii_data['gps_primary']['lon']
+            
+            # Determine color based on audit report
+            marker_color = "green"
+            if "CRITICAL" in adk_response.upper():
+                marker_color = "red"
+            elif "HIGH" in adk_response.upper():
+                marker_color = "orange"
+                
+            m = folium.Map(location=[lat, lon], zoom_start=14)
+            map_context = _fetch_google_maps_context(lat, lon)
+            county = map_context.get("county", "Unknown")
+            speed_limit = map_context.get("speed_limit", "Unknown")
+            lanes = map_context.get("lanes", "Unknown")
+            
+            tooltip_text = (
+                f"<b>Event ID:</b> {event_id}<br>"
+                f"<b>Driver:</b> [MASKED]<br>"
+                f"<b>Unit:</b> [MASKED]<br>"
+                f"<b>GPS:</b> [MASKED]<br>"
+                f"<b>County:</b> {county}<br>"
+                f"<b>Speed Limit:</b> {speed_limit}<br>"
+                f"<b>Lanes:</b> {lanes}<br>"
+                f"<b>Audit Result:</b> {marker_color.upper()}<br><br>"
+                f"<i>Note: Original GPS coordinates retrieved securely for map display only.</i>"
+            )
+            folium.Marker(
+                [lat, lon],
+                tooltip=tooltip_text,
+                icon=folium.Icon(color=marker_color, icon="info-sign")
+            ).add_to(m)
+            map_html = m._repr_html_()
+        else:
+            map_html = f"<div style='padding:20px; color:red;'>Event ID {event_id} not found in secure store. Cannot retrieve GPS coordinates for display.</div>"
+    else:
+        map_html = "<div style='padding:20px; color:orange;'>No Event ID detected in the log text. GPS cannot be securely retrieved.</div>"
 
-    return redaction_banner, purified_context, compliance_report
+    return redaction_banner, purified_context, compliance_report, map_html
 
 
 # ==============================================================================
@@ -970,6 +1031,9 @@ with gr.Blocks(  # pragma: no cover
                     interactive=False,
                 )
 
+        with gr.Row():
+            tab1_map = gr.HTML(label="Interactive GPS Plot")
+
         # Generate button — triggers generate_synthetic_log() backend handler
         with gr.Row():
             tab1_generate_btn = gr.Button(
@@ -989,7 +1053,7 @@ with gr.Blocks(  # pragma: no cover
         tab1_generate_btn.click(
             fn=generate_synthetic_log,
             inputs=[],
-            outputs=[tab1_log_output, tab1_meta_output],
+            outputs=[tab1_log_output, tab1_meta_output, tab1_map],
         )
 
     # ══════════════════════════════════════════════════════════════════════════
@@ -1060,13 +1124,20 @@ with gr.Blocks(  # pragma: no cover
             label="📄 Audited Corporate Compliance Report  [ Stage 2 — gemini-1.5-pro output ]",
             value="> ⬆️ Paste a log and click **Run Safe Validation Audit** to generate the compliance report.",
         )
+        
+        with gr.Row():
+            tab2_map = gr.HTML(label="Validation GPS Plot")
+            
+        gr.Markdown("""
+        *⚠️ Note: The GPS location plotted above was redacted and hidden from the LLM model for privacy reasons. It was retrieved securely via Event ID from the raw input exclusively for this map display.*
+        """)
 
         # Wire button → backend → all three outputs
         # Note: session_id_state is passed as input to enable ADK session isolation.
         tab2_audit_btn.click(
             fn=run_secure_validation,
             inputs=[tab2_raw_input, session_id_state],
-            outputs=[tab2_redaction_status, tab2_purified_context, tab2_report],
+            outputs=[tab2_redaction_status, tab2_purified_context, tab2_report, tab2_map],
         )
 
     # ══════════════════════════════════════════════════════════════════════════

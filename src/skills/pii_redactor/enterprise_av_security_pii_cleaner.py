@@ -249,22 +249,20 @@ class EnterpriseAVSecurityPIICleaner:
             return full[:coord_start] + PLACEHOLDER_GPS + full[coord_end:]
 
         # Labelled: "lat: X lon: Y"
-        text = _GPS_LABELLED_PATTERN.sub(
-            lambda m: (
-                self._gps_count := self._gps_count + 1,  # type: ignore[misc]
-                self._details.append({
-                    "type": "GPS_COORDINATE", "pattern": "labelled",
-                    "match": m.group(0)[:60], "position": m.start(),
-                }),
-                re.sub(
-                    rf"{_LAT}{_COMPASS}[\s,;]+(?:lon(?:gitude)?|lng)\s*[:\-=]?\s*{_LON}{_COMPASS}",
-                    PLACEHOLDER_GPS,
-                    m.group(0),
-                    flags=re.IGNORECASE,
-                ),
-            )[-1],
-            text,
-        )
+        def _labelled_replace(m: re.Match) -> str:
+            self._gps_count += 1
+            self._details.append({
+                "type": "GPS_COORDINATE", "pattern": "labelled",
+                "match": m.group(0)[:60], "position": m.start(),
+            })
+            return re.sub(
+                rf"{_LAT}{_COMPASS}[\s,;]+(?:lon(?:gitude)?|lng)\s*[:\-=]?\s*{_LON}{_COMPASS}",
+                PLACEHOLDER_GPS,
+                m.group(0),
+                flags=re.IGNORECASE,
+            )
+
+        text = _GPS_LABELLED_PATTERN.sub(_labelled_replace, text)
 
         # Keyword-prefixed pair
         def _kw_replace(m: re.Match) -> str:
