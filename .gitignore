@@ -1,0 +1,68 @@
+# ==============================================================================
+# .gitignore — Autonomous Vehicles Validation Agent Project
+# ==============================================================================
+
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+eggs/
+.eggs/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+pip-wheel-metadata/
+share/python-wheels/
+
+# Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+*.log
+
+# ADK Runtime Artifacts
+.adk/
+agent_cache/
+__adk_sessions__/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Distribution / Packaging
+*.whl
+*.tar.gz
+
+# OS
+.DS_Store
+*.swp

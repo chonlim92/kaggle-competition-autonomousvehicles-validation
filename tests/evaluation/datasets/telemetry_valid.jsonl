@@ -1,0 +1,3 @@
+{"id": "tel-001", "input": {"record_id": "scene_0001", "lidar_points_per_sweep": 45000, "camera_fps": 12, "timestamp_gap_ms": 100}, "expected_issues": [], "tags": ["valid"]}
+{"id": "tel-002", "input": {"record_id": "scene_0002", "lidar_points_per_sweep": 50, "camera_fps": 0, "timestamp_gap_ms": 5000}, "expected_issues": ["LOW_POINT_DENSITY", "SENSOR_DROPOUT"], "tags": ["dropout", "critical"]}
+{"id": "tel-003", "input": {"record_id": "scene_0003", "lidar_points_per_sweep": 38000, "camera_fps": 10, "timestamp_gap_ms": 150, "velocity_delta_ms": 20.5}, "expected_issues": ["INCONSISTENT_VELOCITY"], "tags": ["velocity", "high"]}

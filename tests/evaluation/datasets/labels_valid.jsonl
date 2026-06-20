@@ -1,0 +1,4 @@
+{"id": "lbl-001", "input": {"record_id": "scene_0001", "annotations": [{"tracking_id": "obj_1", "category": "vehicle.car", "frames": [1,2,3]}]}, "expected_issues": [], "tags": ["valid"]}
+{"id": "lbl-002", "input": {"record_id": "scene_0002", "annotations": [{"tracking_id": "obj_1", "category": "vehicle.car", "frames": [1,2]}, {"tracking_id": "obj_1", "category": "pedestrian.adult", "frames": [3]}]}, "expected_issues": ["CATEGORY_MISMATCH"], "tags": ["category", "high"]}
+{"id": "lbl-003", "input": {"record_id": "scene_0003", "annotations": []}, "expected_issues": ["MISSING_LABEL"], "tags": ["missing", "critical"]}
+{"id": "lbl-004", "input": {"record_id": "scene_0004", "annotations": [{"tracking_id": "obj_2", "category": "vehicle.truck", "width": -1.5, "length": 7.2, "height": 3.1}]}, "expected_issues": ["NEGATIVE_DIMENSION"], "tags": ["dimension", "high"]}
