@@ -13,7 +13,7 @@ except ImportError:
 
 DATASET_PATH = Path(__file__).parent / "golden_dataset.json"
 
-def load_golden_dataset():
+def load_golden_dataset() -> list:
     if not DATASET_PATH.exists():
         return []
     with open(DATASET_PATH, "r", encoding="utf-8") as f:
@@ -21,7 +21,7 @@ def load_golden_dataset():
 
 @pytest.mark.integration
 @pytest.mark.parametrize("case", load_golden_dataset(), ids=lambda c: c["case_id"])
-def test_golden_dataset_pii_redaction(case):
+def test_golden_dataset_pii_redaction(case: dict) -> None:
     """
     Live LLM evaluation engine test against the golden dataset.
     Ensures that PII is redacted properly (trajectory + output token constraint).

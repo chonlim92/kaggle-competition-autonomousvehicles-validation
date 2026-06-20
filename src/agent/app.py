@@ -900,7 +900,7 @@ def _init_session_id() -> str:
 
 
 # ── Build the Gradio Blocks interface ─────────────────────────────────────────
-with gr.Blocks(
+with gr.Blocks(  # pragma: no cover
     theme=gr.themes.Base(
         primary_hue=gr.themes.colors.blue,
         secondary_hue=gr.themes.colors.slate,
@@ -1122,7 +1122,7 @@ with gr.Blocks(
 # Entry Point
 # ==============================================================================
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     import argparse
 
     parser = argparse.ArgumentParser(description="AV Validation Agent Dashboard")
