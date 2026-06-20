@@ -26,6 +26,7 @@ from google.adk.tools import FunctionTool
 from src.agent.config import get_config
 from src.agent.prompts import ORCHESTRATOR_SYSTEM_PROMPT
 from src.skills.pii_redactor.enterprise_av_security_pii_cleaner import clean_pii
+from src.agent.hooks import PIIEnforcementHook
 
 logger = structlog.get_logger(__name__)
 
@@ -63,6 +64,7 @@ root_agent = LlmAgent(
         generate_report_tool,
         retrieve_knowledge_tool,
     ],
+    hooks=[PIIEnforcementHook()],
 )
 
 # Phase 13: Embed safety rules and guardrails into agent context at startup

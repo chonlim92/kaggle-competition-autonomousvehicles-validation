@@ -190,11 +190,23 @@
 - [x] Add data pipeline for ingesting AV scene files
 - [x] Add submission generator (`generate_report` → Kaggle JSONL format)
 
-### Phase 16 — Golden Dataset Eval & Strict PII Verification
-- [x] Create `tests/evaluation/golden_dataset.json` with unmasked PII string records.
-- [x] Specify the Ground Truth expected trajectory requiring the `clean_pii` tool.
-- [x] Implement test engine (`test_golden_dataset.py`) to assert tool calls.
-- [x] Add strict output token verification constraints failing tests if raw entities leak.
+### Phase 16: Live LLM Evaluation Constraint Testing
+- `[x]` Build `golden_dataset.json` with baseline raw PII test cases.
+- `[x]` Create automated test module (`test_golden_dataset.py`) to launch LLM sessions.
+- `[x]` Verify agent uses the exact expected trajectory (i.e. `clean_pii` tool called).
+- `[x]` Audit final prompt context response strictly against forbidden leaked PII string sequences.
+
+### Phase 17: CI Stabilization and Test Coverage
+- `[x]` Fix `mypy` typing errors causing CI pipeline failures.
+- `[x]` Implement missing unit tests for `data_simulator.py`, `app.py`, `knowledge_retrieval.py`, `pipeline.py`, and `enterprise_av_security_pii_cleaner.py`.
+- `[x]` Reach `pytest` coverage of >95% to ensure all underlying systems are properly tested.
+- `[x]` Exclude the visual Gradio UI layer (`app.py` blocks) via pragmas to accurately gauge backend code coverage.
+
+### Phase 18: Security Tooling and Agent Hooks
+- `[x]` Create a comprehensive test report in the `docs` folder.
+- `[x]` Configure `.pre-commit-config.yaml` to detect hardcoded credentials and API keys.
+- `[x]` Implement ADK agent hook (`PIIEnforcementHook`) to automatically intercept workflows where PII might leak before reaching the LLM.
+
 
 ---
 
