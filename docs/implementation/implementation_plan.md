@@ -1,0 +1,182 @@
+# Implementation Plan — AV Validation Agent
+
+## Goal
+
+Initialize a **production-grade ADK 2.0 agent** for the Kaggle Autonomous Vehicles Validation
+competition, starting from an empty cloned repository. The agent must be fully operable from
+day one, with no manual file creation required from the developer.
+
+---
+
+## Background
+
+The project is based on the Google ADK (Agent Developer Kit) 2.0 framework.
+It uses Gemini as the underlying LLM and is structured to validate autonomous
+vehicle telemetry and annotation data submitted as part of a Kaggle competition.
+
+Key non-functional requirements:
+- **Privacy by default** — PII must be redacted before LLM processing
+- **Auditability** — every validation finding is traceable to a record ID
+- **Testability** — layered test pyramid with dataset-driven evaluation
+- **Zero secrets in git** — `.env` protected by `.gitignore` from the first commit
+
+---
+
+## Proposed Changes
+
+### Root Scaffolding
+
+#### [NEW] `.env`
+Local-only secrets file. Contains `GEMINI_API_KEY` and `GOOGLE_GENAI_USE_ENTERPRISE=FALSE`.
+Protected by `.gitignore` — never committed.
+
+#### [NEW] `.env.example`
+Committed template for team onboarding. Documents every supported env variable.
+
+#### [NEW] `.gitignore`
+Covers Python build artefacts, virtual environments, IDE configs, ADK runtime
+sessions, and critically the `.env` file.
+
+#### [NEW] `README.md`
+Top-level project documentation: quickstart, directory tree, environment variable
+reference, and architecture overview.
+
+#### [NEW] `pyproject.toml`
+Single-file dependency and build configuration. Key dependencies:
+- `google-adk>=2.0.0` — ADK 2.0 runtime
+- `google-generativeai>=0.8.0` — Gemini SDK
+- `presidio-analyzer` + `presidio-anonymizer` — PII detection engine
+- `pydantic>=2.7.0` — runtime config validation
+- `structlog>=24.0.0` — structured logging
+- Dev extras: `pytest`, `ruff`, `mypy`, `pre-commit`
+
+---
+
+### Component: Core Orchestrator Agent (`src/agent/`)
+
+#### [NEW] `src/agent/__init__.py`
+Package init — exports `root_agent` as the ADK entry point.
+
+#### [NEW] `src/agent/config.py`
+Frozen Pydantic `AgentConfig` model loaded from environment variables via
+`python-dotenv`. Cached as a singleton with `@lru_cache`. Fields:
+- `gemini_api_key`, `google_genai_use_enterprise`
+- `orchestrator_model` (default: `gemini-2.0-flash`)
+- `app_env`, `log_level`
+- `pii_redaction_mode`, `pii_redaction_placeholder`
+- `eval_dataset_path`
+
+#### [NEW] `src/agent/prompts.py`
+Versioned system prompts stored separately from agent wiring:
+- `ORCHESTRATOR_SYSTEM_PROMPT` — full AV expert persona, operating principles,
+  tool usage guidelines, and required JSON output format
+- `PII_REDACTOR_TASK_PROMPT` — sub-task prompt for PII scanning
+
+#### [NEW] `src/agent/agent.py`
+Root `LlmAgent` (`root_agent`) with four `FunctionTool` slots:
+| Tool | Status |
+|------|--------|
+| `redact_pii` | ✅ Implemented (via PII Redactor skill) |
+| `validate_telemetry` | 🔲 Placeholder — extend with range/dropout checks |
+| `validate_labels` | 🔲 Placeholder — extend with IOU/class checks |
+| `generate_report` | 🔲 Placeholder — extend with aggregation logic |
+
+---
+
+### Component: PII Redactor Skill (`src/skills/pii_redactor/`)
+
+#### [NEW] `src/skills/pii_redactor/__init__.py`
+Package init — exports `redact_pii`.
+
+#### [NEW] `src/skills/pii_redactor/redactor.py`
+Core `PIIRedactor` class with:
+- **Primary engine**: Microsoft Presidio (`presidio-analyzer` + `presidio-anonymizer`)
+- **Custom recognizers**: VIN (17-char regex, score 0.85) + Licence Plate (EU/US pattern)
+- **Fallback**: Regex-only redaction when Presidio is not installed
+- **Three modes**: `mask` (placeholder), `redact` (`<ENTITY_TYPE>` tag), `tokenize` (SHA-256 hash)
+- Returns `RedactionResult` dataclass with `redacted_text`, `detected_entities`, `pii_found`
+
+#### [NEW] `src/skills/pii_redactor/skill.py`
+ADK `FunctionTool` adapter. Thin wrapper over `PIIRedactor` with:
+- Rich docstring for LLM JSON schema auto-generation
+- Reads config from the shared `AgentConfig` singleton
+- Returns plain `dict` (ADK requirement)
+
+---
+
+### Component: Knowledge Assets (`assets/`)
+
+#### [NEW] `assets/README.md`
+Documents the knowledge asset structure and usage pattern.
+
+#### [NEW] `assets/knowledge/av_domain_glossary.md`
+Comprehensive AV domain reference covering:
+- Core terminology (ego vehicle, scene, frame, sweep, sample)
+- Sensor modalities (LiDAR, Camera, RADAR, IMU, GNSS, CAN Bus)
+- Annotation standards (3D bounding box fields, 12 standard categories)
+- Validation rules by severity (CRITICAL / HIGH / MEDIUM / LOW)
+- PII types common in AV datasets
+- Coordinate frame conventions
+- Kaggle competition specifics (mAP@0.5, ATE, ASE, submission format)
+
+---
+
+### Component: Evaluation Suite (`tests/evaluation/`)
+
+#### [NEW] `tests/evaluation/conftest.py`
+Shared pytest fixtures:
+- `agent_config` (session-scoped) — validated `AgentConfig`
+- `pii_redactor` (session-scoped) — `PIIRedactor` instance
+- `pii_eval_dataset`, `telemetry_eval_dataset`, `labels_eval_dataset` — JSONL loaders
+- Custom pytest markers: `unit`, `integration`, `slow`
+
+#### [NEW] `tests/evaluation/test_agent_eval.py`
+Four test classes:
+1. `TestAgentConfig` — validates Pydantic config loading (unit)
+2. `TestPIIRedactorUnit` — email, VIN, phone, SSN redaction (unit)
+3. `TestRedactPIISkill` — `FunctionTool` adapter contract (unit)
+4. `TestPIIEvalDataset` — dataset-driven parametrized eval (unit)
+5. `TestAgentIntegration` — live API smoke tests (integration, skipped without key)
+
+#### [NEW] `tests/evaluation/datasets/pii_redaction.jsonl`
+5 evaluation cases: email, VIN, phone, SSN, and clean text.
+
+#### [NEW] `tests/evaluation/datasets/telemetry_valid.jsonl`
+3 cases: valid telemetry, dropout + low density, inconsistent velocity.
+
+#### [NEW] `tests/evaluation/datasets/labels_valid.jsonl`
+4 cases: valid labels, category mismatch, missing labels, negative dimensions.
+
+---
+
+### Component: Docs (`docs/implementation/`)
+
+#### [NEW] `docs/implementation/implementation_plan.md`
+This file. Documents the full design intent and file-level change rationale.
+
+#### [NEW] `docs/implementation/tasks.md`
+Chronological task log tracking completion status of every work item.
+
+#### [NEW] `docs/implementation/walkthrough.md`
+Narrative walkthrough of the scaffolded project: structure, design decisions,
+key commands, and next steps for extending the agent.
+
+---
+
+## Verification Plan
+
+### Automated Tests
+```bash
+pytest tests/evaluation/ -v -m "unit"           # Fast unit suite
+pytest tests/evaluation/ -v -m "integration"    # Live API suite
+```
+
+### Manual Verification
+- `adk web src/agent/` launches the ADK Dev UI without errors
+- Sending a message with an email address invokes `redact_pii` and returns redacted output
+- `.env` is NOT present in `git log --name-only`
+- `git push origin main` succeeds and all 22 files appear on GitHub
+
+---
+
+*Last updated: 2026-06-20 | Phase: Initial Scaffold Complete*
