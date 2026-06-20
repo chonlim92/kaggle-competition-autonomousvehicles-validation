@@ -424,7 +424,7 @@ def generate_synthetic_log() -> tuple[str, str, str]:
 def _fetch_google_maps_context(lat: float, lon: float) -> dict:
     import requests
     api_key = "AIzaSyD2ZOFDD1iGQ-pvTbdhXiuFxcmL1wS0umY"
-    context = {"county": "Unknown", "speed_limit": "Unknown", "lanes": "Unknown"}
+    context = {"county": "Unknown", "road_name": "Unknown", "speed_limit": "Unknown", "lanes": "Unknown", "weather": "Unknown", "street_view_iframe": ""}
     try:
         geo_url = f"https://maps.googleapis.com/maps/api/geocode/json?latlng={lat},{lon}&key={api_key}"
         resp = requests.get(geo_url, timeout=5).json()
@@ -432,15 +432,24 @@ def _fetch_google_maps_context(lat: float, lon: float) -> dict:
             for result in resp.get("results", []):
                 for component in result.get("address_components", []):
                     types = component.get("types", [])
-                    if "administrative_area_level_2" in types:
+                    if "administrative_area_level_2" in types and context["county"] == "Unknown":
                         context["county"] = component.get("long_name")
-                        break
-                if context["county"] != "Unknown":
+                    if "route" in types and context["road_name"] == "Unknown":
+                        context["road_name"] = component.get("long_name")
+                if context["county"] != "Unknown" and context["road_name"] != "Unknown":
                     break
         roads_url = f"https://roads.googleapis.com/v1/speedLimits?path={lat},{lon}&key={api_key}"
         r_resp = requests.get(roads_url, timeout=5).json()
         if "speedLimits" in r_resp and len(r_resp["speedLimits"]) > 0:
             context["speed_limit"] = str(r_resp["speedLimits"][0].get("speedLimit", "Unknown")) + " km/h"
+            
+        weather_url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true"
+        w_resp = requests.get(weather_url, timeout=5).json()
+        if "current_weather" in w_resp:
+            cw = w_resp["current_weather"]
+            context["weather"] = f"{cw.get('temperature')}°C, Wind {cw.get('windspeed')} km/h"
+            
+        context["street_view_iframe"] = f"https://www.google.com/maps/embed/v1/streetview?key={api_key}&location={lat},{lon}&heading=210&pitch=10&fov=35"
     except Exception:
         pass
     return context
@@ -506,6 +515,37 @@ def run_secure_validation(raw_log_text: str, session_id: str) -> tuple[str, str,
         total_redactions=summary["total"],
     )
 
+    # Extract Event ID, lookup coordinates securely, and inject API context for the agent
+    event_id_match = re.search(r"EVT-[0-9A-F]{8}", raw_log_text)
+    event_id = None
+    lat = None
+    lon = None
+    map_context = {}
+    street_view_html = ""
+    
+    if event_id_match:
+        event_id = event_id_match.group(0)
+        if event_id in _EVENT_STORE:
+            pii_data = _EVENT_STORE[event_id]
+            lat = pii_data['gps_primary']['lat']
+            lon = pii_data['gps_primary']['lon']
+            map_context = _fetch_google_maps_context(lat, lon)
+            
+            enrichment_block = (
+                f"\n\n--- ENRICHED ENVIRONMENT CONTEXT (Obtained securely, original GPS coordinates masked) ---\n"
+                f"Road Name: {map_context.get('road_name')}\n"
+                f"County: {map_context.get('county')}\n"
+                f"Weather: {map_context.get('weather')}\n"
+                f"Speed Limit: {map_context.get('speed_limit')}\n"
+                f"Lanes: {map_context.get('lanes')}\n"
+                f"Note for Audit Agent: Please factor these environment conditions into your safety audit report, and list the data sources (Google Maps API, Open-Meteo) at the end of your report.\n"
+                f"--------------------------------------------------------------------------------------\n"
+            )
+            purified_context += enrichment_block
+            
+            if map_context.get("street_view_iframe"):
+                street_view_html = f"<div style='margin-top: 15px;'><iframe width='100%' height='300' src='{map_context['street_view_iframe']}' frameborder='0' style='border:0' allowfullscreen></iframe></div>"
+
     # ── Stage 2: ADK Compliance Report Generation ─────────────────────────────
     logger.info("Tab 2: Stage 2 — dispatching to ADK compliance agent", model=COMPLIANCE_MODEL)
 
@@ -538,18 +578,11 @@ def run_secure_validation(raw_log_text: str, session_id: str) -> tuple[str, str,
         f"| Model: {COMPLIANCE_MODEL}*"
     )
     
-    # Extract Event ID and create map
-    event_id_match = re.search(r"EVT-[0-9A-F]{8}", raw_log_text)
+    # Create map
     map_html = ""
     
-    if event_id_match:
-        event_id = event_id_match.group(0)
-        
-        if event_id in _EVENT_STORE:
-            pii_data = _EVENT_STORE[event_id]
-            lat = pii_data['gps_primary']['lat']
-            lon = pii_data['gps_primary']['lon']
-            
+    if event_id:
+        if lat is not None and lon is not None:
             # Determine color based on audit report
             marker_color = "green"
             if "CRITICAL" in adk_response.upper():
@@ -558,8 +591,9 @@ def run_secure_validation(raw_log_text: str, session_id: str) -> tuple[str, str,
                 marker_color = "orange"
                 
             m = folium.Map(location=[lat, lon], zoom_start=14)
-            map_context = _fetch_google_maps_context(lat, lon)
             county = map_context.get("county", "Unknown")
+            road_name = map_context.get("road_name", "Unknown")
+            weather = map_context.get("weather", "Unknown")
             speed_limit = map_context.get("speed_limit", "Unknown")
             lanes = map_context.get("lanes", "Unknown")
             
@@ -568,7 +602,9 @@ def run_secure_validation(raw_log_text: str, session_id: str) -> tuple[str, str,
                 f"<b>Driver:</b> [MASKED]<br>"
                 f"<b>Unit:</b> [MASKED]<br>"
                 f"<b>GPS:</b> [MASKED]<br>"
+                f"<b>Road:</b> {road_name}<br>"
                 f"<b>County:</b> {county}<br>"
+                f"<b>Weather:</b> {weather}<br>"
                 f"<b>Speed Limit:</b> {speed_limit}<br>"
                 f"<b>Lanes:</b> {lanes}<br>"
                 f"<b>Audit Result:</b> {marker_color.upper()}<br><br>"
