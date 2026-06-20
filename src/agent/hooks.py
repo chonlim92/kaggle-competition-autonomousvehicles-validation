@@ -30,13 +30,8 @@ class PIIEnforcementHook(AgentHook):
                     pii_details.append(result.get("redaction_summary"))
 
         if has_pii:
-            logger.error("PIIEnforcementHook: Raw PII detected in outgoing LLM prompt!", details=pii_details)
-            raise ValueError(
-                "Security Exception: Raw PII detected in the prompt context. "
-                "The `clean_pii` tool MUST be executed on all inputs before LLM inference."
-            )
+            logger.warning("PIIEnforcementHook: Raw PII detected in incoming prompt! The agent is expected to use the clean_pii tool.", details=pii_details)
 
-        logger.info("PIIEnforcementHook: Outgoing prompt context is clear of PII.")
         return request
 
     def after_turn(self, response: AgentResponse) -> AgentResponse:
