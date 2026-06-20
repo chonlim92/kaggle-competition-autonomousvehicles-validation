@@ -208,7 +208,74 @@ history stays in sync with code history.
 
 ---
 
-## Current State
+## Phase 9 — Knowledge Assets Population
+
+**Date**: 2026-06-20
+**Files created**: `assets/rules.txt`, `assets/fleet_history.txt`, `assets/guardrails.txt`
+
+### rules.txt — Design decisions
+
+`rules.txt` is authored as a formal regulatory document with version control, an authority
+header, and structured rule blocks. Each rule uses a consistent schema:
+
+```
+RULE_ID / Category / Severity / Status / Applies To
+  → Purpose, Definitions, Thresholds (tables), Breach Conditions,
+    Compliance Actions, Validation Agent Rule, Exceptions
+```
+
+**AV-REG-101** defines velocity thresholds across three intersection classes and two road
+condition states. The "Validation Agent Rule" sub-section is key: it tells the agent
+exactly what issue code to emit, what severity to assign, and what fields are required in
+the output. This makes the rule machine-actionable, not just human-readable.
+
+**AV-REG-102** introduces the critical link between sensor health and velocity compliance:
+when a Level 2 or Level 3 sensor fault is active, the vehicle automatically enters
+"Adverse Conditions" for AV-REG-101 purposes. This cross-rule interaction means the agent
+must evaluate both rules together, not independently.
+
+The wet-road camera reflection protocol in AV-REG-102 was written to directly address
+BUG-CAM-402-WET-007 documented in `fleet_history.txt` — the two files are intentionally
+cross-referenced to create a coherent grounding context for the agent.
+
+### fleet_history.txt — Design decisions
+
+The file is structured as a **long-context memory profile** — a term deliberately chosen
+because it signals to the agent that this is grounding context with higher precedence than
+general training data. The preamble explicitly states this.
+
+The bug entry for BUG-CAM-402-WET-007 is written at two levels:
+1. **Human-readable narrative** — root cause, impact profile, reproduction conditions
+2. **Machine-actionable agent rules** — numbered steps telling the agent exactly how to
+   process AV-FLEET-402 wet-road data differently from other fleet units
+
+This dual-level structure ensures the document serves both as an engineering reference and
+as a reliable in-context grounding source for the LLM-based orchestrator.
+
+The peer fleet comparison table is intentional: it gives the agent a clear baseline to
+understand that AV-FLEET-402's wet-road anomalies are not fleet-wide, preventing
+over-generalisation of the bug to other units.
+
+### guardrails.txt — Design decisions
+
+Guardrails are structured in two severity classes:
+- **CRITICAL** — hard stops. Output is suppressed entirely on failure. Covers security
+  (credential leakage, infra exposure), privacy (PII re-exposure), and structural integrity
+  (malformed JSON, token budget overflow).
+- **STANDARD** — corrective transforms. Output is modified and released. Covers tone,
+  certainty calibration, and voice compliance.
+
+The `GR-LEAK-001` exception clause is important: rule IDs (AV-REG-101, AV-REG-102) and
+bug IDs (BUG-CAM-402-WET-007) are explicitly permitted in outputs when directly relevant
+to a finding. Without this exception, the guardrail would suppress legitimate structured
+references that the agent must include in compliance reports.
+
+The prohibited phrase dictionary in `GR-TONE-001` includes explicit replacements, not just
+a blocklist. This ensures the agent always has a compliant alternative available rather
+than silently omitting content.
+
+---
+
 
 ```
 kaggle-competition-autonomousvehicles-validation/
@@ -238,8 +305,11 @@ kaggle-competition-autonomousvehicles-validation/
 │
 ├── assets/
 │   ├── README.md                     ✅
+│   ├── rules.txt                     ✅ NEW — AV-REG-101 + AV-REG-102
+│   ├── fleet_history.txt             ✅ NEW — AV-FLEET-402 memory profile
+│   ├── guardrails.txt                ✅ NEW — GR-TOK/LEAK/TONE constraints
 │   └── knowledge/
-│       └── av_domain_glossary.md     ✅ (AV domain grounding)
+│       └── av_domain_glossary.md     ✅
 │
 └── tests/
     └── evaluation/
@@ -258,13 +328,13 @@ kaggle-competition-autonomousvehicles-validation/
 
 | Phase | Task | Priority |
 |-------|------|----------|
-| 9 | Implement `validate_telemetry` — range checks, dropout detection | 🔴 High |
-| 9 | Implement `validate_labels` — IOU, class consistency, missing labels | 🔴 High |
-| 9 | Implement `generate_report` — severity aggregation, Kaggle JSONL | 🔴 High |
-| 10 | Wire `assets/knowledge/` into ADK retrieval tool | 🟡 Medium |
-| 11 | GitHub Actions CI for `pytest -m "unit"` on PRs | 🟡 Medium |
-| 12 | Kaggle API integration for dataset download + submission | 🟢 Low |
+| 10 | Implement `validate_telemetry` — apply AV-REG-102 MOT thresholds, detect dropout | 🔴 High |
+| 10 | Implement `validate_labels` — IOU, class consistency, missing labels | 🔴 High |
+| 10 | Implement `generate_report` — apply GR-TOK token budget, GR-TONE normalisation | 🔴 High |
+| 11 | Wire all four `assets/` files into ADK retrieval tool for RAG | 🟡 Medium |
+| 12 | GitHub Actions CI for `pytest -m "unit"` on PRs | 🟡 Medium |
+| 13 | Kaggle API integration for dataset download + submission | 🟢 Low |
 
 ---
 
-*Last updated: 2026-06-20 | Phase 8 complete — docs folder initialized*
+*Last updated: 2026-06-20 | Phase 9 complete — knowledge assets fully populated*

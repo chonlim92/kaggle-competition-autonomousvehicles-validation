@@ -147,6 +147,45 @@ Four test classes:
 #### [NEW] `tests/evaluation/datasets/labels_valid.jsonl`
 4 cases: valid labels, category mismatch, missing labels, negative dimensions.
 
+### Component: Knowledge Assets Extended (`assets/`) — Phase 9
+
+#### [NEW] `assets/rules.txt`
+Operational safety rules document structured as a formal regulatory specification.
+Two active rules:
+- **AV-REG-101** (Intersection Safety — Velocity Thresholds): Three zone-type tables
+  (uncontrolled, controlled, school/pedestrian) with nominal and adverse condition limits.
+  Defines three breach levels (WARN/ALERT/OVERRIDE) and a validation agent issue code spec
+  (`AV-REG-101-BREACH`) with required field list.
+- **AV-REG-102** (Sensor Obstruction Integrity Rules): Per-sensor Minimum Operational
+  Threshold (MOT) table for LiDAR, cameras, RADAR, IMU, GNSS. Three obstruction levels
+  (MINOR/MODERATE/SEVERE) with actions. Wet-road camera reflection protocol with
+  confidence penalty rules. Multi-sensor fault escalation to MRC manoeuvre. Explicit
+  interaction clause linking AV-REG-102 status to AV-REG-101 adverse condition mode.
+
+#### [NEW] `assets/fleet_history.txt`
+Long-context memory profile for AV-FLEET-402. Designed to be loaded as grounding context
+for validation agents processing Zone 7 telemetry. Key contents:
+- Full software stack state: `v4.2.1-beta` on core autonomy + perception (only unit in Zone 7)
+- Active bug `BUG-CAM-402-WET-007`: camera reflection false positives on wet roads, introduced
+  by the beta patch's normalisation layer change; phantom objects at confidence 0.62–0.74;
+  safety-critical overlap with AV-REG-101 emergency deceleration threshold
+- Validation agent disambiguation rules: apply 1.5× confidence penalty, tag SUSPECT_PHANTOM,
+  do not raise AV-REG-102 alerts on phantom objects alone, always cross-validate with LiDAR
+- Three-incident history with root causes and statuses
+- Five-unit peer fleet comparison with software versions and bug status
+
+#### [NEW] `assets/guardrails.txt`
+Mandatory output safety constraints for the AV Validation Orchestrator. Four sections:
+- **GR-TOK** (Token Audit, CRITICAL): Budget enforcement (2,048/8,192 token limits),
+  JSON structural verification with two-attempt repair, repetition/padding detection
+- **GR-LEAK** (Text Leakage, CRITICAL): System prompt leakage detection with sentinel phrases,
+  PII re-exposure prevention via session-scoped registry, credential/secret pattern scanning
+  (API keys, bearer tokens, private keys), internal infra reference suppression
+- **GR-TONE** (Tone Normalisation, STANDARD): Emotional hyperbole stripping with prohibited
+  phrase dictionary and neutral replacements, certainty calibration (over/under-confidence
+  correction), corporate passive-voice and third-person enforcement, speculation prohibition
+- **Enforcement Summary**: 11 guardrail IDs with class (CRITICAL/STANDARD) and failure actions
+
 ---
 
 ### Component: Docs (`docs/implementation/`)
@@ -179,4 +218,4 @@ pytest tests/evaluation/ -v -m "integration"    # Live API suite
 
 ---
 
-*Last updated: 2026-06-20 | Phase: Initial Scaffold Complete*
+*Last updated: 2026-06-20 | Phase: Phase 9 — Knowledge Assets Complete*

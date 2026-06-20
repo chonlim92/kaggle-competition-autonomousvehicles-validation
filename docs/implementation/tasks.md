@@ -107,27 +107,46 @@
 
 ---
 
+## Phase 9 — Knowledge Assets Population (`assets/`) ✅
+
+- [x] Create `assets/rules.txt` — Driving Safety Protocol document
+  - `RULE_ID: AV-REG-101` — Intersection velocity thresholds (3 zone tables: uncontrolled, controlled, school zones; nominal + adverse conditions; breach levels WARN/ALERT/OVERRIDE; validation agent issue code spec)
+  - `RULE_ID: AV-REG-102` — Sensor obstruction integrity rules (5-sensor MOT table; 3 obstruction levels; wet-road camera reflection protocol; multi-sensor fault escalation; AV-REG-101 interaction clause)
+- [x] Create `assets/fleet_history.txt` — Long-context fleet memory profile for AV-FLEET-402
+  - Beta software patch `v4.2.1-beta` (PATCH-402-V421B) — isolated rollout, 1 unit only
+  - Active bug `BUG-CAM-402-WET-007` — camera reflection false positives on wet roads (confidence 0.62–0.74); 1.5× confidence penalty rule
+  - 3-incident operational history; peer fleet comparison table (5 units)
+  - Validation agent disambiguation rules for wet-road phantom objects
+- [x] Create `assets/guardrails.txt` — AI output safety constraints
+  - Section 1 (GR-TOK): Token budget enforcement, JSON structure verification, repetition/padding detection
+  - Section 2 (GR-LEAK): System prompt leakage, PII re-exposure, credential/secret detection, internal infra suppression
+  - Section 3 (GR-TONE): Emotional hyperbole stripping (prohibited phrase dictionary + neutral replacements), certainty calibration, passive-voice compliance, speculation prohibition
+  - Section 4: Enforcement summary table (11 guardrail IDs, CRITICAL vs STANDARD)
+- [ ] Commit and push Phase 9 assets to remote
+
+---
+
 ## Pending / Future Phases
 
-### Phase 9 — Tool Implementation
-- [ ] Implement `validate_telemetry` — sensor range checks, dropout detection, timestamp gap analysis
+### Phase 10 — Tool Implementation
+- [ ] Implement `validate_telemetry` — sensor range checks, dropout detection, timestamp gap analysis (referencing AV-REG-102 MOT thresholds)
 - [ ] Implement `validate_labels` — IOU checks, class distribution, category consistency
-- [ ] Implement `generate_report` — severity aggregation, Kaggle JSONL report formatter
+- [ ] Implement `generate_report` — severity aggregation, Kaggle JSONL report formatter (applying GR-TOK and GR-TONE guardrails)
 
-### Phase 10 — RAG Knowledge Base
-- [ ] Wire `assets/knowledge/` into `google.adk.tools.retrieval` or equivalent
-- [ ] Embed glossary and rules into agent context at startup
+### Phase 11 — RAG Knowledge Base
+- [ ] Wire `assets/rules.txt`, `assets/fleet_history.txt`, `assets/guardrails.txt`, and `assets/knowledge/av_domain_glossary.md` into `google.adk.tools.retrieval` or equivalent
+- [ ] Embed safety rules and guardrails into agent context at startup
 
-### Phase 11 — CI/CD
+### Phase 12 — CI/CD
 - [ ] Add GitHub Actions workflow for `pytest -m "unit"` on every PR
 - [ ] Add pre-commit hooks: `ruff`, `mypy`
 - [ ] Add Dependabot for `pyproject.toml` dependency updates
 
-### Phase 12 — Kaggle Integration
+### Phase 13 — Kaggle Integration
 - [ ] Add Kaggle API client for dataset download (`kaggle competitions download`)
 - [ ] Add data pipeline for ingesting AV scene files
 - [ ] Add submission generator (`generate_report` → Kaggle JSONL format)
 
 ---
 
-*Last updated: 2026-06-20 | Phase 8 complete*
+*Last updated: 2026-06-20 | Phase 9 complete*
