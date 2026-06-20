@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 import structlog
-from google.adk.agents.hooks import Hook
-from google.adk.agents.agent import AgentRequest, AgentResponse
+from google.adk.agents.agent import Hook, AgentRequest, AgentResponse
 from src.skills.pii_redactor.enterprise_av_security_pii_cleaner import clean_pii
 
 logger = structlog.get_logger(__name__)
