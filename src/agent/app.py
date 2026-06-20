@@ -423,7 +423,8 @@ def generate_synthetic_log() -> tuple[str, str, str]:
 
 def _fetch_google_maps_context(lat: float, lon: float) -> dict:
     import requests
-    api_key = "AIzaSyD2ZOFDD1iGQ-pvTbdhXiuFxcmL1wS0umY"
+    import os
+    api_key = os.environ.get("GOOGLE_MAPS_API_KEY", "")
     context = {"county": "Unknown", "road_name": "Unknown", "speed_limit": "Unknown", "lanes": "Unknown", "weather": "Unknown", "street_view_iframe": ""}
     try:
         geo_url = f"https://maps.googleapis.com/maps/api/geocode/json?latlng={lat},{lon}&key={api_key}"
