@@ -177,19 +177,19 @@
 - [x] Create automated unit tests parsing `tests/evaluation/datasets/*.jsonl`
 
 ### Phase 13 — RAG Knowledge Base
-- [ ] Wire `assets/rules.txt`, `assets/fleet_history.txt`, `assets/guardrails.txt`, and `assets/knowledge/av_domain_glossary.md` into `google.adk.tools.retrieval` or equivalent
-- [ ] Embed safety rules and guardrails into agent context at startup
+- [x] Wire `assets/rules.txt`, `assets/fleet_history.txt`, `assets/guardrails.txt`, and `assets/knowledge/av_domain_glossary.md` into `google.adk.tools.retrieval` or equivalent
+- [x] Embed safety rules and guardrails into agent context at startup
 
 ### Phase 14 — CI/CD
-- [ ] Add GitHub Actions workflow for `pytest -m "unit"` on every PR
-- [ ] Add pre-commit hooks: `ruff`, `mypy`
-- [ ] Add Dependabot for `pyproject.toml` dependency updates
+- [x] Add GitHub Actions workflow for `pytest -m "unit"` on every PR
+- [x] Add pre-commit hooks: `ruff`, `mypy`
+- [x] Add Dependabot for `pyproject.toml` dependency updates
 
 ### Phase 15 — Kaggle Integration
-- [ ] Add Kaggle API client for dataset download (`kaggle competitions download`)
-- [ ] Add data pipeline for ingesting AV scene files
-- [ ] Add submission generator (`generate_report` → Kaggle JSONL format)
+- [x] Add Kaggle API client for dataset download (`kaggle competitions download`)
+- [x] Add data pipeline for ingesting AV scene files
+- [x] Add submission generator (`generate_report` → Kaggle JSONL format)
 
 ---
 
-*Last updated: 2026-06-20 | Phase 12 complete*
+*Last updated: 2026-06-20 | All Phases complete!*

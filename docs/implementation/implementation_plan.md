@@ -283,6 +283,21 @@ Replaces the `generate_report` placeholder.
 #### [MODIFY] `src/agent/agent.py`
 - Removed dummy tool implementations.
 - Imported and injected real implementations from `src/skills/validation/` into `FunctionTool`.
+- Embedded `rules.txt` and `guardrails.txt` into the orchestrator agent context at startup.
+- Registered `retrieve_knowledge_tool` for runtime file access.
+
+### Component: Core Skills (`src/skills/`) — Phases 13 & 15
+
+#### [NEW] `src/skills/knowledge_retrieval.py`
+- Simple safe file-reader tool exposing `assets/` to the agent.
+
+#### [NEW] `src/skills/kaggle/pipeline.py`
+- Implemented `KagglePipeline` encapsulating API calls for downloading competition datasets and formatting JSONL submissions from validation reports.
+
+### Component: Infrastructure (`.github/` & `.pre-commit-config.yaml`) — Phase 14
+- Configured `.github/workflows/ci.yml` for automated pytest on push/PR.
+- Setup Dependabot in `.github/dependabot.yml` for weekly pip updates.
+- Configured `.pre-commit-config.yaml` to run `ruff` and `mypy` locally.
 
 ---
 
@@ -320,4 +335,4 @@ pytest tests/evaluation/ -v -m "integration"    # Live API suite
 
 ---
 
-*Last updated: 2026-06-20 | Phase: Phase 12 — Tool Implementation Complete*
+*Last updated: 2026-06-20 | Phase: Phase 15 — Project Complete!*

@@ -469,22 +469,43 @@ src/
   ├── agent/
   │    └── agent.py                          ✅ MODIFIED — Injected real tool implementations
   └── skills/
+       ├── kaggle/
+       │    ├── __init__.py                  ✅ NEW
+       │    └── pipeline.py                  ✅ NEW
+       ├── knowledge_retrieval.py            ✅ NEW
        ├── pii_redactor/
        └── validation/
-            ├── __init__.py                  ✅ NEW
-            ├── telemetry_validator.py       ✅ NEW
-            ├── label_validator.py           ✅ NEW
-            └── report_generator.py          ✅ NEW
+            ├── __init__.py                  
+            ├── telemetry_validator.py       
+            ├── label_validator.py           
+            └── report_generator.py          
+
+---
+
+## Phases 13-15 — Final Integrations
+
+**Date**: 2026-06-20
+
+### Phase 13: Knowledge Retrieval & RAG
+- **Startup Context Injection**: `src/agent/agent.py` was modified to load `assets/rules.txt` and `assets/guardrails.txt` directly into the `ORCHESTRATOR_SYSTEM_PROMPT` during agent initialization. This ensures the model fundamentally understands its operating rules without needing to query for them.
+- **Dynamic Retrieval Tool**: Created `src/skills/knowledge_retrieval.py` (`retrieve_knowledge_tool`) that allows the orchestrator to safely read any file inside the `assets/` directory (e.g., `fleet_history.txt`, `av_domain_glossary.md`) at runtime.
+
+### Phase 14: CI/CD & Infrastructure
+- **Automated Testing**: Built `.github/workflows/ci.yml` that provisions an Ubuntu runner, installs dependencies via `pip install -e .[test]`, and runs the pytest suite on every push and PR to `main`.
+- **Pre-commit Hooks**: Configured `.pre-commit-config.yaml` to run `ruff` (linter/formatter) and `mypy` (static typing) automatically on developer machines before commits are allowed.
+- **Dependabot**: Added `.github/dependabot.yml` to automatically submit PRs for outdated `pip` and `github-actions` dependencies.
+
+### Phase 15: Kaggle Pipeline
+- **API Client**: Added the official `kaggle` package to `pyproject.toml`.
+- **Downloader & Submitter**: Created `src/skills/kaggle/pipeline.py` which provides the `KagglePipeline` class. It manages downloading the raw datasets (`competition_download_files`) and packaging the validated reports into the required `submission.jsonl` format.
 ```
 
 ## Next Steps
 
 | Phase | Task | Priority |
 |-------|------|----------|
-| 13 | Wire all four `assets/` files into ADK retrieval tool for RAG | 🔴 High |
-| 14 | GitHub Actions CI for `pytest -m "unit"` on PRs | 🟡 Medium |
-| 15 | Kaggle API integration for dataset download + submission | 🟢 Low |
+| N/A | Project Complete! Explore the dashboard. | 🟢 Done |
 
 ---
 
-*Last updated: 2026-06-20 | Phase 12 complete — Core validation tools built and tested*
+*Last updated: 2026-06-20 | Project Complete!*

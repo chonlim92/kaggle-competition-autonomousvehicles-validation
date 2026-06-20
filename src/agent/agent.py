@@ -35,11 +35,12 @@ pii_redactor_tool = FunctionTool(func=redact_pii)
 
 
 from src.skills.validation import validate_telemetry, validate_labels, generate_report
-
+from src.skills.knowledge_retrieval import retrieve_knowledge
 
 validate_telemetry_tool = FunctionTool(func=validate_telemetry)
 validate_labels_tool = FunctionTool(func=validate_labels)
 generate_report_tool = FunctionTool(func=generate_report)
+retrieve_knowledge_tool = FunctionTool(func=retrieve_knowledge)
 
 
 # ── Root Orchestrator Agent ───────────────────────────────────────────────────
@@ -60,8 +61,21 @@ root_agent = LlmAgent(
         validate_telemetry_tool,
         validate_labels_tool,
         generate_report_tool,
+        retrieve_knowledge_tool,
     ],
 )
+
+# Phase 13: Embed safety rules and guardrails into agent context at startup
+try:
+    with open("assets/rules.txt", "r", encoding="utf-8") as f:
+        rules_text = f.read()
+    with open("assets/guardrails.txt", "r", encoding="utf-8") as f:
+        guardrails_text = f.read()
+    
+    root_agent.instruction += f"\n\n## Core Safety Rules\n{rules_text}\n\n## Guardrails\n{guardrails_text}"
+except Exception as e:
+    logger.warning("Failed to load assets into agent context", error=str(e))
+
 
 logger.info(
     "AV Validation Orchestrator initialised",
