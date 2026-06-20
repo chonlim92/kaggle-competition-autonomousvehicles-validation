@@ -1,6 +1,8 @@
+import os
 from pathlib import Path
 
-ASSETS_DIR = Path("assets")
+base_dir = Path(__file__).parent.parent.parent
+ASSETS_DIR = base_dir / "assets"
 
 def retrieve_knowledge(document_name: str) -> str:
     """

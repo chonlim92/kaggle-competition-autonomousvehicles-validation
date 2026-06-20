@@ -1,0 +1,16 @@
+[
+  {
+    "case_id": "GOLDEN-PII-001",
+    "description": "Raw unmasked log with driver name, plate, and GPS coordinates",
+    "input_text": "Incident at 45.1234, -93.4321. DRIVER: John Smith reported a sensor obstruction on vehicle with PLATE: 8XYZ99.",
+    "expected_trajectory": [
+      "clean_pii"
+    ],
+    "forbidden_tokens": [
+      "John Smith",
+      "8XYZ99",
+      "45.1234",
+      "-93.4321"
+    ]
+  }
+]

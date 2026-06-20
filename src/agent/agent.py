@@ -25,13 +25,13 @@ from google.adk.tools import FunctionTool
 
 from src.agent.config import get_config
 from src.agent.prompts import ORCHESTRATOR_SYSTEM_PROMPT
-from src.skills.pii_redactor.skill import redact_pii
+from src.skills.pii_redactor.enterprise_av_security_pii_cleaner import clean_pii
 
 logger = structlog.get_logger(__name__)
 
 # ── Tool: PII Redactor ────────────────────────────────────────────────────────
 
-pii_redactor_tool = FunctionTool(func=redact_pii)
+pii_redactor_tool = FunctionTool(func=clean_pii)
 
 
 from src.skills.validation import validate_telemetry, validate_labels, generate_report
@@ -66,10 +66,12 @@ root_agent = LlmAgent(
 )
 
 # Phase 13: Embed safety rules and guardrails into agent context at startup
+import os
+base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 try:
-    with open("assets/rules.txt", "r", encoding="utf-8") as f:
+    with open(os.path.join(base_dir, "assets", "rules.txt"), "r", encoding="utf-8") as f:
         rules_text = f.read()
-    with open("assets/guardrails.txt", "r", encoding="utf-8") as f:
+    with open(os.path.join(base_dir, "assets", "guardrails.txt"), "r", encoding="utf-8") as f:
         guardrails_text = f.read()
     
     root_agent.instruction += f"\n\n## Core Safety Rules\n{rules_text}\n\n## Guardrails\n{guardrails_text}"
