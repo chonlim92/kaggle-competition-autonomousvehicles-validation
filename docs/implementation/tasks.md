@@ -202,3 +202,11 @@
 - [x] Added Roads API (Speed Limits)
 - [x] Added Open-Meteo API (Weather)
 - [x] Added Street View interactive iframe
+
+---
+
+## Phase 18 — Remote Git Synchronization
+- [x] Stage all updated documentation (`tasks.md`, `implementation_plan.md`)
+- [x] Commit changes to local Git repository
+- [ ] Push to `origin main`
+- [ ] Verify GitHub Actions remain completely green
