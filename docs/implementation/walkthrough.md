@@ -498,14 +498,18 @@ src/
 ### Phase 15: Kaggle Pipeline
 - **API Client**: Added the official `kaggle` package to `pyproject.toml`.
 - **Downloader & Submitter**: Created `src/skills/kaggle/pipeline.py` which provides the `KagglePipeline` class. It manages downloading the raw datasets (`competition_download_files`) and packaging the validated reports into the required `submission.jsonl` format.
+### Phase 16: Golden Dataset Eval
+- **Golden Testcase Injection**: Created `golden_dataset.json` storing baseline strings with intentional PII leaks (driver name, plate, and GPS coordinates).
+- **Strict Verification Engine**: Developed `test_golden_dataset.py` to process these strings live through the ADK Session. 
+- **Two-Factor Assertions**: The engine verifies trajectory by asserting `clean_pii` is invoked during execution, and audits the final output tokens asserting zero PII leakage.
 ```
 
 ## Next Steps
 
 | Phase | Task | Priority |
 |-------|------|----------|
-| N/A | Project Complete! Explore the dashboard. | 🟢 Done |
+| N/A | Golden Dataset Eval Complete! Explore the dashboard. | 🟢 Done |
 
 ---
 
-*Last updated: 2026-06-20 | Project Complete!*
+*Last updated: 2026-06-20 | Golden Eval Complete!*

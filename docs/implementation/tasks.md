@@ -190,6 +190,12 @@
 - [x] Add data pipeline for ingesting AV scene files
 - [x] Add submission generator (`generate_report` → Kaggle JSONL format)
 
+### Phase 16 — Golden Dataset Eval & Strict PII Verification
+- [x] Create `tests/evaluation/golden_dataset.json` with unmasked PII string records.
+- [x] Specify the Ground Truth expected trajectory requiring the `clean_pii` tool.
+- [x] Implement test engine (`test_golden_dataset.py`) to assert tool calls.
+- [x] Add strict output token verification constraints failing tests if raw entities leak.
+
 ---
 
 *Last updated: 2026-06-20 | All Phases complete!*

@@ -144,6 +144,12 @@ Four test classes:
 #### [NEW] `tests/evaluation/datasets/telemetry_valid.jsonl`
 3 cases: valid telemetry, dropout + low density, inconsistent velocity.
 
+#### [NEW] `tests/evaluation/golden_dataset.json`
+Array of structured golden dataset tasks for evaluating the orchestration agent trajectory, specifically tracking PII leakage. Contains the `forbidden_tokens` schema for strict verification.
+
+#### [NEW] `tests/evaluation/test_golden_dataset.py`
+Evaluation engine checking `golden_dataset.json` by invoking the `Session` live with `gemini-1.5-pro`. Audits output tokens and expected trajectory (enforces `clean_pii`).
+
 #### [NEW] `tests/evaluation/datasets/labels_valid.jsonl`
 4 cases: valid labels, category mismatch, missing labels, negative dimensions.
 
@@ -331,8 +337,9 @@ pytest tests/evaluation/ -v -m "integration"    # Live API suite
 - `python src/agent/app.py` successfully launches the Gradio 3-tab dashboard.
 - `.env` is NOT present in `git log --name-only`
 - `pytest tests/evaluation/test_validation_tools.py` successfully passes 7 cases for the implemented validation tools.
+- `pytest tests/evaluation/test_golden_dataset.py` successfully injects `golden_dataset.json` and evaluates zero PII leakage.
 - `git push origin main` succeeds and all files appear on GitHub
 
 ---
 
-*Last updated: 2026-06-20 | Phase: Phase 15 — Project Complete!*
+*Last updated: 2026-06-20 | Phase: Phase 16 — Golden Dataset Eval Complete!*
