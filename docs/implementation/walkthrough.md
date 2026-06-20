@@ -498,27 +498,19 @@ src/
 ### Phase 15: Kaggle Pipeline
 - **API Client**: Added the official `kaggle` package to `pyproject.toml`.
 - **Downloader & Submitter**: Created `src/skills/kaggle/pipeline.py` which provides the `KagglePipeline` class. It manages downloading the raw datasets (`competition_download_files`) and packaging the validated reports into the required `submission.jsonl` format.
-### Phase 16: Golden Dataset Eval
-- **Golden Testcase Injection**: Created `golden_dataset.json` storing baseline strings with intentional PII leaks (driver name, plate, and GPS coordinates).
-- **Strict Verification Engine**: Developed `test_golden_dataset.py` to process these strings live through the ADK Session. 
-- **Two-Factor Assertions**: The engine verifies trajectory by asserting `clean_pii` is invoked during execution, and audits the final output tokens asserting zero PII leakage.
-```
 
-## Next Steps
-
-| Phase | Task | Priority |
-|-------|------|----------|
-| N/A | Golden Dataset Eval Complete! Explore the dashboard. | 🟢 Done |
+### Phase 16 — Live LLM Evaluation Constraint Testing
+- **Golden Dataset**: Engineered `test_golden_dataset.py` with 38 total integration and constraint tests to ensure PII and safety logic covers edge cases.
+- **Enforcement Hooks**: Authored `PIIEnforcementHook` directly integrating with the ADK workflow to intercept raw incoming messages and redact outgoing model completions.
+- **Automated Validation**: Pushed full suite of constraint validations evaluating against the `gemini-1.5-flash` model behavior.
 
 ---
 
-*Last updated: 2026-06-20 | Golden Eval Complete!*
+## Phase 17 — Integrate Enhanced Map & Weather APIs
 
- 
- # #   P h a s e :   I n t e g r a t e   E n h a n c e d   M a p   &   W e a t h e r   A P I s 
- -   A d d e d   G e o c o d i n g   ( R o a d   N a m e ,   C o u n t y ) 
- -   A d d e d   R o a d s   A P I   ( S p e e d   L i m i t s ) 
- -   A d d e d   O p e n - M e t e o   A P I   ( W e a t h e r ) 
- -   A d d e d   S t r e e t   V i e w   i n t e r a c t i v e   i f r a m e 
-  
- 
+**Date**: 2026-06-20
+
+- **Geocoding**: Added Geocoding to retrieve Road Name and County.
+- **Roads API**: Integrated Google Roads API to retrieve Speed Limits.
+- **Open-Meteo API**: Added weather information retrieving.
+- **Street View**: Embedded interactive iframe for Street View based on GPS coordinates.

@@ -161,7 +161,7 @@
 
 ---
 
-### Phase 11 — Enterprise Dashboard UI (`src/agent/app.py`)
+### Phase 11 — Enterprise Dashboard UI (`src/agent/app.py`) ✅
 - [x] Add `gradio` to `pyproject.toml` dependencies
 - [x] Build Gradio 3-tab layout with dark enterprise theme
 - [x] Implement Tab 1 (Synthetic Data Generation Engine) backed by `AVDisengagementLogSimulator` (gemini-1.5-flash)
@@ -170,53 +170,35 @@
 
 ---
 
-### Phase 12 — Tool Implementation (`src/skills/validation/`)
+### Phase 12 — Tool Implementation (`src/skills/validation/`)  ✅
 - [x] Implement `validate_telemetry` — sensor range checks, dropout detection, timestamp gap analysis (referencing AV-REG-102 MOT thresholds)
 - [x] Implement `validate_labels` — IOU checks, class distribution, category consistency
 - [x] Implement `generate_report` — severity aggregation, Kaggle JSONL report formatter (applying GR-TOK and GR-TONE guardrails)
 - [x] Create automated unit tests parsing `tests/evaluation/datasets/*.jsonl`
 
-### Phase 13 — RAG Knowledge Base
+### Phase 13 — RAG Knowledge Base ✅
 - [x] Wire `assets/rules.txt`, `assets/fleet_history.txt`, `assets/guardrails.txt`, and `assets/knowledge/av_domain_glossary.md` into `google.adk.tools.retrieval` or equivalent
 - [x] Embed safety rules and guardrails into agent context at startup
 
-### Phase 14 — CI/CD
+### Phase 14 — CI/CD ✅
 - [x] Add GitHub Actions workflow for `pytest -m "unit"` on every PR
 - [x] Add pre-commit hooks: `ruff`, `mypy`
 - [x] Add Dependabot for `pyproject.toml` dependency updates
 
-### Phase 15 — Kaggle Integration
+### Phase 15 — Kaggle Integration ✅
 - [x] Add Kaggle API client for dataset download (`kaggle competitions download`)
 - [x] Add data pipeline for ingesting AV scene files
 - [x] Add submission generator (`generate_report` → Kaggle JSONL format)
 
-### Phase 16: Live LLM Evaluation Constraint Testing
-- `[x]` Build `golden_dataset.json` with baseline raw PII test cases.
-- `[x]` Create automated test module (`test_golden_dataset.py`) to launch LLM sessions.
-- `[x]` Verify agent uses the exact expected trajectory (i.e. `clean_pii` tool called).
-- `[x]` Audit final prompt context response strictly against forbidden leaked PII string sequences.
-
-### Phase 17: CI Stabilization and Test Coverage
-- `[x]` Fix `mypy` typing errors causing CI pipeline failures.
-- `[x]` Implement missing unit tests for `data_simulator.py`, `app.py`, `knowledge_retrieval.py`, `pipeline.py`, and `enterprise_av_security_pii_cleaner.py`.
-- `[x]` Reach `pytest` coverage of >95% to ensure all underlying systems are properly tested.
-- `[x]` Exclude the visual Gradio UI layer (`app.py` blocks) via pragmas to accurately gauge backend code coverage.
-
-### Phase 18: Security Tooling and Agent Hooks
-- `[x]` Create a comprehensive test report in the `docs` folder.
-- `[x]` Configure `.pre-commit-config.yaml` to detect hardcoded credentials and API keys.
-- `[x]` Implement ADK agent hook (`PIIEnforcementHook`) to automatically intercept workflows where PII might leak before reaching the LLM.
+### Phase 16 — Live LLM Evaluation Constraint Testing ✅
+- [x] Create `test_golden_dataset.py` for comprehensive Golden Dataset evaluation
+- [x] Implement PII Enforcement Hooks (`PIIEnforcementHook`) to strictly intercept PII before LLM calls
+- [x] Create integration tests (`test_hooks.py`) enforcing GR-LEAK and live LLM constraints
+- [x] Run full constraint evaluation suite against `gemini-1.5-flash` model
 
 
----
-
-*Last updated: 2026-06-20 | All Phases complete!*
-
- 
- # #   P h a s e :   I n t e g r a t e   E n h a n c e d   M a p   &   W e a t h e r   A P I s 
- -   A d d e d   G e o c o d i n g   ( R o a d   N a m e ,   C o u n t y ) 
- -   A d d e d   R o a d s   A P I   ( S p e e d   L i m i t s ) 
- -   A d d e d   O p e n - M e t e o   A P I   ( W e a t h e r ) 
- -   A d d e d   S t r e e t   V i e w   i n t e r a c t i v e   i f r a m e 
-  
- 
+## Phase 17 — Integrate Enhanced Map & Weather APIs ✅
+- [x] Added Geocoding (Road Name, County)
+- [x] Added Roads API (Speed Limits)
+- [x] Added Open-Meteo API (Weather)
+- [x] Added Street View interactive iframe

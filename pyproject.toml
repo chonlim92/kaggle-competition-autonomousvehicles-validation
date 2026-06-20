@@ -8,7 +8,7 @@ license = { text = "MIT" }
 
 dependencies = [
     # Google ADK 2.0
-    "google-adk>=2.0.0",
+    "google-adk==0.1.0",
     # Google Generative AI SDK
     "google-generativeai>=0.8.0",
     # Environment variable loading
@@ -27,6 +27,8 @@ dependencies = [
     "gradio>=4.31.0",
     # Kaggle API Integration
     "kaggle>=1.6.14",
+    # HTTP Requests
+    "requests>=2.31.0",
 ]
 
 [project.optional-dependencies]
