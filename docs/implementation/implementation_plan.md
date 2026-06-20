@@ -260,6 +260,32 @@ with a feature-rich three-tab Gradio frontend GUI.
 
 ---
 
+### Component: Core Agent Tools (`src/skills/validation/`) — Phase 12
+
+#### [NEW] `src/skills/validation/telemetry_validator.py`
+Replaces the `validate_telemetry` placeholder.
+- Deterministic checks against `AV-REG-102` thresholds (e.g., LiDAR `< 10,000` points per sweep).
+- Detects sensor dropouts and timestamp gaps.
+- Flags inconsistent velocity deltas.
+
+#### [NEW] `src/skills/validation/label_validator.py`
+Replaces the `validate_labels` placeholder.
+- Verifies label dimension constraints (no negative sizes).
+- Checks for missing annotation lists.
+- Ensures classification consistency across frames for matching tracking IDs.
+
+#### [NEW] `src/skills/validation/report_generator.py`
+Replaces the `generate_report` placeholder.
+- Aggregates issues from both telemetry and labels.
+- Calculates severity summaries for incident reporting (CRITICAL vs HIGH).
+- Formats validation findings cleanly to act as constraints for the LLM output.
+
+#### [MODIFY] `src/agent/agent.py`
+- Removed dummy tool implementations.
+- Imported and injected real implementations from `src/skills/validation/` into `FunctionTool`.
+
+---
+
 ### Component: Docs (`docs/implementation/`)
 
 #### [NEW] `docs/implementation/implementation_plan.md`
@@ -277,6 +303,7 @@ key commands, and next steps for extending the agent.
 ## Verification Plan
 
 ### Automated Tests
+- `pytest tests/evaluation/test_validation_tools.py -v -m "unit"` tests the deterministic tool logic against ground truth expected outcomes in `telemetry_valid.jsonl` and `labels_valid.jsonl`.
 ```bash
 pytest tests/evaluation/ -v -m "unit"           # Fast unit suite
 pytest tests/evaluation/ -v -m "integration"    # Live API suite
@@ -288,8 +315,9 @@ pytest tests/evaluation/ -v -m "integration"    # Live API suite
 - `python -m src.skills.pii_redactor.data_simulator` generates a log with driver name, plate, and GPS embedded
 - `python src/agent/app.py` successfully launches the Gradio 3-tab dashboard.
 - `.env` is NOT present in `git log --name-only`
+- `pytest tests/evaluation/test_validation_tools.py` successfully passes 7 cases for the implemented validation tools.
 - `git push origin main` succeeds and all files appear on GitHub
 
 ---
 
-*Last updated: 2026-06-20 | Phase: Phase 11 — Enterprise Dashboard UI Complete*
+*Last updated: 2026-06-20 | Phase: Phase 12 — Tool Implementation Complete*

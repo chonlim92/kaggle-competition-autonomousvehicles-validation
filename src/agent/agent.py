@@ -34,66 +34,7 @@ logger = structlog.get_logger(__name__)
 pii_redactor_tool = FunctionTool(func=redact_pii)
 
 
-# ── Placeholder Tools (extend these as the project grows) ─────────────────────
-
-def validate_telemetry(record_id: str, telemetry_json: str) -> dict:  # type: ignore[return]
-    """
-    Validate sensor telemetry readings for a single AV record.
-
-    Args:
-        record_id: Unique identifier for the AV data record.
-        telemetry_json: JSON string containing raw telemetry fields.
-
-    Returns:
-        Validation result dict with `issues` list and `severity` map.
-    """
-    # TODO: Implement telemetry range checks, dropout detection, timestamp gaps
-    logger.info("validate_telemetry called", record_id=record_id)
-    return {
-        "record_id": record_id,
-        "status": "not_implemented",
-        "issues": [],
-        "message": "Telemetry validation not yet implemented — extend this tool.",
-    }
-
-
-def validate_labels(record_id: str, labels_json: str) -> dict:  # type: ignore[return]
-    """
-    Validate annotation labels for a single AV record.
-
-    Args:
-        record_id: Unique identifier for the AV data record.
-        labels_json: JSON string containing label/annotation data.
-
-    Returns:
-        Validation result dict with `issues` list and `severity` map.
-    """
-    # TODO: Implement label completeness, class distribution, IOU checks
-    logger.info("validate_labels called", record_id=record_id)
-    return {
-        "record_id": record_id,
-        "status": "not_implemented",
-        "issues": [],
-        "message": "Label validation not yet implemented — extend this tool.",
-    }
-
-
-def generate_report(validation_results: str) -> dict:  # type: ignore[return]
-    """
-    Aggregate individual validation results into a final Kaggle submission report.
-
-    Args:
-        validation_results: JSON string of combined telemetry + label results.
-
-    Returns:
-        Structured report dict ready for Kaggle submission.
-    """
-    # TODO: Aggregate results, compute severity breakdown, format for submission
-    logger.info("generate_report called")
-    return {
-        "status": "not_implemented",
-        "message": "Report generation not yet implemented — extend this tool.",
-    }
+from src.skills.validation import validate_telemetry, validate_labels, generate_report
 
 
 validate_telemetry_tool = FunctionTool(func=validate_telemetry)

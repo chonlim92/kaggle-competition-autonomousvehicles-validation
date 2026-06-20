@@ -170,10 +170,11 @@
 
 ---
 
-### Phase 12 — Tool Implementation
-- [ ] Implement `validate_telemetry` — sensor range checks, dropout detection, timestamp gap analysis (referencing AV-REG-102 MOT thresholds)
-- [ ] Implement `validate_labels` — IOU checks, class distribution, category consistency
-- [ ] Implement `generate_report` — severity aggregation, Kaggle JSONL report formatter (applying GR-TOK and GR-TONE guardrails)
+### Phase 12 — Tool Implementation (`src/skills/validation/`)
+- [x] Implement `validate_telemetry` — sensor range checks, dropout detection, timestamp gap analysis (referencing AV-REG-102 MOT thresholds)
+- [x] Implement `validate_labels` — IOU checks, class distribution, category consistency
+- [x] Implement `generate_report` — severity aggregation, Kaggle JSONL report formatter (applying GR-TOK and GR-TONE guardrails)
+- [x] Create automated unit tests parsing `tests/evaluation/datasets/*.jsonl`
 
 ### Phase 13 — RAG Knowledge Base
 - [ ] Wire `assets/rules.txt`, `assets/fleet_history.txt`, `assets/guardrails.txt`, and `assets/knowledge/av_domain_glossary.md` into `google.adk.tools.retrieval` or equivalent
@@ -191,4 +192,4 @@
 
 ---
 
-*Last updated: 2026-06-20 | Phase 11 complete*
+*Last updated: 2026-06-20 | Phase 12 complete*

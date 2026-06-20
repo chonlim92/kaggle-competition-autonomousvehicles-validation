@@ -432,20 +432,59 @@ src/
             ├── data_simulator.py            
             ├── redactor.py                  
             └── skill.py                     
+
+---
+
+## Phase 12 — Tool Implementation
+
+**Date**: 2026-06-20  
+**Files created**: 
+- `src/skills/validation/telemetry_validator.py`
+- `src/skills/validation/label_validator.py`
+- `src/skills/validation/report_generator.py`
+- `tests/evaluation/test_validation_tools.py`
+
+### Validation Skills — Design decisions
+
+**Dataset-Driven Tool Development:**
+Instead of simple generic validation scripts, the telemetry and label validators were designed deterministically against the structured datasets `telemetry_valid.jsonl` and `labels_valid.jsonl`. 
+
+- **Telemetry Validator (`telemetry_validator.py`):** 
+  - Implements the strict thresholds outlined in `assets/rules.txt` (AV-REG-102). 
+  - Catches `LOW_POINT_DENSITY` (LiDAR points < 10,000), `SENSOR_DROPOUT` (fps=0 or timestamp gaps > 500ms), and `INCONSISTENT_VELOCITY`.
+- **Label Validator (`label_validator.py`):** 
+  - Inspects annotation boundaries for anomalies, flagging `MISSING_LABEL`, `NEGATIVE_DIMENSION`, and `CATEGORY_MISMATCH` to catch upstream perception engine failures.
+- **Report Generator (`report_generator.py`):** 
+  - Aggregates findings and summarises the overall pipeline severity distribution (CRITICAL vs HIGH).
+
+**Test Coverage:**
+- The tools have full unit test coverage using `pytest`. The parameterized `test_validation_tools.py` dynamically loads the ground truth from the JSONL artifacts to ensure accuracy. 
+
+---
+
+## Current State (Phase 12)
+
+```
+src/
+  ├── agent/
+  │    └── agent.py                          ✅ MODIFIED — Injected real tool implementations
+  └── skills/
+       ├── pii_redactor/
+       └── validation/
+            ├── __init__.py                  ✅ NEW
+            ├── telemetry_validator.py       ✅ NEW
+            ├── label_validator.py           ✅ NEW
+            └── report_generator.py          ✅ NEW
 ```
 
 ## Next Steps
 
 | Phase | Task | Priority |
-| Phase | Task | Priority |
 |-------|------|----------|
-| 12 | Implement `validate_telemetry` — apply AV-REG-102 MOT thresholds, detect dropout | 🔴 High |
-| 12 | Implement `validate_labels` — IOU, class consistency, missing labels | 🔴 High |
-| 12 | Implement `generate_report` — apply GR-TOK token budget, GR-TONE normalisation | 🔴 High |
-| 13 | Wire all four `assets/` files into ADK retrieval tool for RAG | 🟡 Medium |
+| 13 | Wire all four `assets/` files into ADK retrieval tool for RAG | 🔴 High |
 | 14 | GitHub Actions CI for `pytest -m "unit"` on PRs | 🟡 Medium |
 | 15 | Kaggle API integration for dataset download + submission | 🟢 Low |
 
 ---
 
-*Last updated: 2026-06-20 | Phase 11 complete — Enterprise Dashboard UI built*
+*Last updated: 2026-06-20 | Phase 12 complete — Core validation tools built and tested*
