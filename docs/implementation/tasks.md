@@ -157,29 +157,38 @@
   - Returns: `log_text`, `metadata.injected_pii` (ground truth for eval), `generated_at`, `model`
   - CLI: `--count`, `--seed`, `--save` (auto-saves JSONL to `tests/evaluation/datasets/`), `--temperature`, `--print-metadata`
   - Graceful import guard if `google-generativeai` not installed
-- [ ] Commit and push Phase 10 files to remote
+- [x] Commit and push Phase 10 files to remote
 
 ---
 
-### Phase 11 — Tool Implementation
+### Phase 11 — Enterprise Dashboard UI (`src/agent/app.py`)
+- [x] Add `gradio` to `pyproject.toml` dependencies
+- [x] Build Gradio 3-tab layout with dark enterprise theme
+- [x] Implement Tab 1 (Synthetic Data Generation Engine) backed by `AVDisengagementLogSimulator` (gemini-1.5-flash)
+- [x] Implement Tab 2 (Secure Validation Audit Portal) linking regex PII cleaner and `av_compliance_agent` (gemini-1.5-pro)
+- [x] Implement Tab 3 (Automated Performance Evaluation) with JSONL recall, smoke tests, and boundary tests
+
+---
+
+### Phase 12 — Tool Implementation
 - [ ] Implement `validate_telemetry` — sensor range checks, dropout detection, timestamp gap analysis (referencing AV-REG-102 MOT thresholds)
 - [ ] Implement `validate_labels` — IOU checks, class distribution, category consistency
 - [ ] Implement `generate_report` — severity aggregation, Kaggle JSONL report formatter (applying GR-TOK and GR-TONE guardrails)
 
-### Phase 12 — RAG Knowledge Base
+### Phase 13 — RAG Knowledge Base
 - [ ] Wire `assets/rules.txt`, `assets/fleet_history.txt`, `assets/guardrails.txt`, and `assets/knowledge/av_domain_glossary.md` into `google.adk.tools.retrieval` or equivalent
 - [ ] Embed safety rules and guardrails into agent context at startup
 
-### Phase 13 — CI/CD
+### Phase 14 — CI/CD
 - [ ] Add GitHub Actions workflow for `pytest -m "unit"` on every PR
 - [ ] Add pre-commit hooks: `ruff`, `mypy`
 - [ ] Add Dependabot for `pyproject.toml` dependency updates
 
-### Phase 14 — Kaggle Integration
+### Phase 15 — Kaggle Integration
 - [ ] Add Kaggle API client for dataset download (`kaggle competitions download`)
 - [ ] Add data pipeline for ingesting AV scene files
 - [ ] Add submission generator (`generate_report` → Kaggle JSONL format)
 
 ---
 
-*Last updated: 2026-06-20 | Phase 10 complete*
+*Last updated: 2026-06-20 | Phase 11 complete*

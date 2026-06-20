@@ -23,6 +23,8 @@ dependencies = [
     # Data handling
     "pandas>=2.2.0",
     "pydantic>=2.7.0",
+    # Gradio dashboard frontend
+    "gradio>=4.31.0",
 ]
 
 [project.optional-dependencies]

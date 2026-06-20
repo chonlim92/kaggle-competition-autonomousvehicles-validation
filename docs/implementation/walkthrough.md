@@ -390,29 +390,62 @@ generate → clean → evaluate → improve regex → repeat.
 
 ---
 
-## Current State (Phase 10)
+## Phase 11 — Enterprise Dashboard UI
+
+**Date**: 2026-06-20  
+**Files created**: `src/agent/app.py`
+**Dependencies added**: `gradio>=4.31.0`
+
+### app.py — Design decisions
+
+**Three-Tab Functional Separation:**
+- **Tab 1: Synthetic Data Generation Engine:** Powered by `AVDisengagementLogSimulator` (using `gemini-1.5-flash`), it generates realistic, messy logs with injected PII for testing. It outputs ground truth metadata alongside the log.
+- **Tab 2: Secure Validation Audit Portal:** The core operational dashboard. It implements a strict **two-stage defence-in-depth pipeline**:
+  - *Stage 1*: Deterministic PII sanitization via `enterprise_av_security_pii_cleaner`. Replaces PII with typed placeholders (`[DRIVER_REDACTED]`, etc.).
+  - *Stage 2*: The purified context is then sent to the `av_compliance_agent` (powered by `gemini-1.5-pro`) to generate a formal corporate compliance report. The LLM *never* sees the raw user input.
+- **Tab 3: Automated Performance Evaluation:** A built-in test suite runner executing JSONL recall tests, smoke tests, and boundary tests to ensure guardrails are enforced and PII is successfully redacted.
+
+**Model Selection & Agent Config:**
+- The compliance agent intentionally uses `gemini-1.5-pro` (defined in `COMPLIANCE_MODEL`) due to the complex reasoning required for formal incident report formatting and regulatory rule cross-referencing.
+- `gemini-1.5-flash` is relegated to data generation (Tab 1) for speed and cost efficiency.
+
+**Security Boundaries & UI Feedback:**
+- Tab 2 includes a specific "Purified Outbound Prompt Context" textbox. This visually reassures the operator that PII has been stripped *before* generation.
+
+---
+
+## Current State (Phase 11)
 
 ```
-src/skills/pii_redactor/
-  ├── __init__.py                           ✅
-  ├── skill.md                              ✅ NEW — tool manifest + JSON schema
-  ├── enterprise_av_security_pii_cleaner.py ✅ NEW — 3-pass regex engine
-  ├── data_simulator.py                     ✅ NEW — Gemini 1.5 Flash log generator
-  ├── redactor.py                           ✅ (Presidio engine, secondary sweep)
-  └── skill.py                              ✅ (ADK FunctionTool for Presidio cleaner)
+src/
+  ├── agent/
+  │    ├── __init__.py
+  │    ├── config.py
+  │    ├── prompts.py
+  │    ├── agent.py
+  │    └── app.py                            ✅ NEW — Gradio Enterprise Dashboard
+  └── skills/
+       └── pii_redactor/
+            ├── __init__.py                  
+            ├── skill.md                     
+            ├── enterprise_av_security_pii_cleaner.py 
+            ├── data_simulator.py            
+            ├── redactor.py                  
+            └── skill.py                     
 ```
 
 ## Next Steps
 
 | Phase | Task | Priority |
+| Phase | Task | Priority |
 |-------|------|----------|
-| 11 | Implement `validate_telemetry` — apply AV-REG-102 MOT thresholds, detect dropout | 🔴 High |
-| 11 | Implement `validate_labels` — IOU, class consistency, missing labels | 🔴 High |
-| 11 | Implement `generate_report` — apply GR-TOK token budget, GR-TONE normalisation | 🔴 High |
-| 12 | Wire all four `assets/` files into ADK retrieval tool for RAG | 🟡 Medium |
-| 13 | GitHub Actions CI for `pytest -m "unit"` on PRs | 🟡 Medium |
-| 14 | Kaggle API integration for dataset download + submission | 🟢 Low |
+| 12 | Implement `validate_telemetry` — apply AV-REG-102 MOT thresholds, detect dropout | 🔴 High |
+| 12 | Implement `validate_labels` — IOU, class consistency, missing labels | 🔴 High |
+| 12 | Implement `generate_report` — apply GR-TOK token budget, GR-TONE normalisation | 🔴 High |
+| 13 | Wire all four `assets/` files into ADK retrieval tool for RAG | 🟡 Medium |
+| 14 | GitHub Actions CI for `pytest -m "unit"` on PRs | 🟡 Medium |
+| 15 | Kaggle API integration for dataset download + submission | 🟢 Low |
 
 ---
 
-*Last updated: 2026-06-20 | Phase 10 complete — enterprise PII cleaner and log simulator built*
+*Last updated: 2026-06-20 | Phase 11 complete — Enterprise Dashboard UI built*
