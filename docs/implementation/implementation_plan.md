@@ -188,6 +188,50 @@ Mandatory output safety constraints for the AV Validation Orchestrator. Four sec
 
 ---
 
+### Component: Enterprise PII Cleaner & Log Simulator (`src/skills/pii_redactor/`) — Phase 10
+
+#### [NEW] `src/skills/pii_redactor/skill.md`
+Tool manifest for `enterprise_av_security_pii_cleaner`. Declares:
+- Tool name, version, implementation path, author, status, classification
+- Strict JSON input schema (`$schema` draft-07): single required field `raw_log_text`
+  (type: string, minLength: 1, maxLength: 65,536, additionalProperties: false)
+- Full JSON output schema: `redacted_text`, `pii_found`, `redaction_summary` (per-category counts),
+  `original_char_count`, `redacted_char_count`
+- Regex pattern reference for all 3 PII categories with family descriptions
+- CLI usage example with expected redacted output and summary
+- Security notes: deterministic-only (no model inference), defence-in-depth positioning
+- Integration pipeline diagram showing tool order in the full sanitisation chain
+
+#### [NEW] `src/skills/pii_redactor/enterprise_av_security_pii_cleaner.py`
+Deterministic, regex-driven PII cleaner. Architecture:
+- `EnterpriseAVSecurityPIICleaner` class — stateful per-call, singleton at module level
+- **3-pass execution order** (ordered to prevent pattern interference):
+  - Pass 1 GPS: labelled (`lat/lon:`), keyword-prefixed (`GPS:/pos:/coord:`), bare decimal (≥4 dp)
+  - Pass 2 Plates: keyword-anchored (`plate:/unit:/reg:/fleet id:`) + standalone format regex
+  - Pass 3 Names: prefix-anchored (`Safety Driver:/SD/Operator:/Engineer:/Technician:` + optional title)
+- Typed placeholders: `[DRIVER_REDACTED]`, `[PLATE_REDACTED]`, `[GPS_REDACTED]`
+- `CleanerResult` dataclass: per-category counts, `pii_found`, `total_redactions`, `redaction_details`
+- `clean_pii(raw_log_text)` — ADK `FunctionTool` adapter, plain `dict` return
+- Module-level `_cleaner` singleton (thread-safe — regex ops are read-only)
+- `if __name__ == "__main__"` CLI quick-test with realistic sample log
+
+#### [NEW] `src/skills/pii_redactor/data_simulator.py`
+Gemini 1.5 Flash synthetic log generator:
+- `AVDisengagementLogSimulator` class — configurable temperature/token budget
+- Prompt engineering: names all 3 PII types explicitly with formatting instructions
+  (use different notation styles; embed naturally in messy prose; add typos/abbreviations)
+- 12 randomised scenario seeds (pedestrian, wet road, construction zone, emergency vehicle, etc.)
+- 20-name diverse driver pool; 10-plate pool (US/EU formats); 5 SF Bay Area GPS regions
+- `generate(seed=)` returns `{log_text, metadata.injected_pii, generated_at, model}`
+- `metadata.injected_pii` = ground truth record (driver name, both plates, both GPS coords)
+  enabling automated PII recall evaluation against the cleaner
+- `generate_batch(count=, seed=)` for bulk dataset generation (max 50 per call)
+- CLI: `--count`, `--seed`, `--save` (JSONL to `tests/evaluation/datasets/`),
+  `--temperature`, `--print-metadata`
+- Graceful `ImportError` guard for environments without `google-generativeai`
+
+---
+
 ### Component: Docs (`docs/implementation/`)
 
 #### [NEW] `docs/implementation/implementation_plan.md`
@@ -212,10 +256,11 @@ pytest tests/evaluation/ -v -m "integration"    # Live API suite
 
 ### Manual Verification
 - `adk web src/agent/` launches the ADK Dev UI without errors
-- Sending a message with an email address invokes `redact_pii` and returns redacted output
+- `python src/skills/pii_redactor/enterprise_av_security_pii_cleaner.py` redacts all 3 PII types from sample log
+- `python -m src.skills.pii_redactor.data_simulator` generates a log with driver name, plate, and GPS embedded
 - `.env` is NOT present in `git log --name-only`
-- `git push origin main` succeeds and all 22 files appear on GitHub
+- `git push origin main` succeeds and all files appear on GitHub
 
 ---
 
-*Last updated: 2026-06-20 | Phase: Phase 9 — Knowledge Assets Complete*
+*Last updated: 2026-06-20 | Phase: Phase 10 — Enterprise PII Cleaner & Log Simulator Complete*

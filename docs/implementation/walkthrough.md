@@ -324,17 +324,95 @@ kaggle-competition-autonomousvehicles-validation/
 
 ---
 
+## Phase 10 — Enterprise PII Cleaner & Log Simulator
+
+**Date**: 2026-06-20  
+**Files created**: `src/skills/pii_redactor/skill.md`, `src/skills/pii_redactor/enterprise_av_security_pii_cleaner.py`, `src/skills/pii_redactor/data_simulator.py`
+
+### skill.md — Design decisions
+
+The tool manifest follows the ADK skill documentation convention: it exists alongside the
+Python implementation to make the tool self-documenting without needing to read source code.
+Key design choices in the manifest:
+
+- **`additionalProperties: false`** in the input schema — enforces strict contract, rejects any
+  extra fields the LLM might hallucinate into the call
+- **Dual output schema** — separate `redaction_summary` dict (per-category counts) and
+  `redaction_details` list (per-entity metadata) gives downstream evaluation code two levels
+  of granularity without over-inflating the primary output
+- **`GR-LEAK-001` exception clause documented** — the manifest explicitly notes that rule IDs
+  and bug IDs are permitted in outputs, preventing engineers from misapplying the guardrail
+
+### enterprise_av_security_pii_cleaner.py — Design decisions
+
+**3-pass order matters critically.** The order GPS → Plates → Names was chosen to prevent
+pattern interference:
+
+1. GPS first: decimal coordinate strings like `37.7749` could match partial plate patterns
+   (e.g., `7749` looks like a 4-digit plate segment). Removing coordinates first eliminates
+   this false-positive risk.
+2. Plates second: plate tokens (e.g., `GBX-1042`) could be partially matched by the name
+   suffix regex if a plate happened to start with an uppercase letter sequence. Removing
+   plates before name matching prevents this.
+3. Names last: name patterns are the most context-dependent and least likely to create
+   interference with already-redacted placeholders.
+
+**Typed placeholders over generic `[REDACTED]`**: Using `[DRIVER_REDACTED]`, `[PLATE_REDACTED]`,
+and `[GPS_REDACTED]` means downstream evaluation code can verify which *category* of PII was
+found without re-running the cleaner. It also makes it obvious to a human reviewer what was
+redacted and where, which is important for auditability (see `guardrails.txt` GR-LEAK-002).
+
+**Singleton `_cleaner`**: The `EnterpriseAVSecurityPIICleaner` instance is created at module
+load time. Regex patterns are compiled once at class definition (module level), making repeated
+calls to `clean_pii()` very fast — no per-call compilation overhead.
+
+### data_simulator.py — Design decisions
+
+**Ground truth metadata as first-class output**: Every simulated log includes
+`metadata.injected_pii` containing the exact driver name, plate values, and GPS coordinates
+that were injected. This transforms the simulator from a simple data generator into an
+**evaluation dataset factory** — you can immediately compute PII recall by comparing
+`metadata.injected_pii` against the cleaner's `redaction_details`.
+
+**High temperature (0.95 default)**: AV logs are inherently varied in style and vocabulary.
+High temperature ensures the simulator doesn't converge on a single log template, producing
+the realistic diversity needed for robust evaluation.
+
+**Prompt structure — explicit vs. implicit PII injection**: The prompt names the exact PII
+values to embed (driver name, plate 1, plate 2, GPS 1, GPS 2) and requires different notation
+styles for each GPS pair. This is intentional: the cleaner must handle notation variety, so
+the simulator must produce it. The instruction to use different prefix formats (`GPS:`, `lat/lon:`,
+bare decimal) maps directly to the three GPS regex patterns in the cleaner.
+
+**`--save` flag auto-JSONL to eval datasets**: Generated logs land directly in
+`tests/evaluation/datasets/` with an ISO timestamp filename. This creates a feedback loop:
+generate → clean → evaluate → improve regex → repeat.
+
+---
+
+## Current State (Phase 10)
+
+```
+src/skills/pii_redactor/
+  ├── __init__.py                           ✅
+  ├── skill.md                              ✅ NEW — tool manifest + JSON schema
+  ├── enterprise_av_security_pii_cleaner.py ✅ NEW — 3-pass regex engine
+  ├── data_simulator.py                     ✅ NEW — Gemini 1.5 Flash log generator
+  ├── redactor.py                           ✅ (Presidio engine, secondary sweep)
+  └── skill.py                              ✅ (ADK FunctionTool for Presidio cleaner)
+```
+
 ## Next Steps
 
 | Phase | Task | Priority |
 |-------|------|----------|
-| 10 | Implement `validate_telemetry` — apply AV-REG-102 MOT thresholds, detect dropout | 🔴 High |
-| 10 | Implement `validate_labels` — IOU, class consistency, missing labels | 🔴 High |
-| 10 | Implement `generate_report` — apply GR-TOK token budget, GR-TONE normalisation | 🔴 High |
-| 11 | Wire all four `assets/` files into ADK retrieval tool for RAG | 🟡 Medium |
-| 12 | GitHub Actions CI for `pytest -m "unit"` on PRs | 🟡 Medium |
-| 13 | Kaggle API integration for dataset download + submission | 🟢 Low |
+| 11 | Implement `validate_telemetry` — apply AV-REG-102 MOT thresholds, detect dropout | 🔴 High |
+| 11 | Implement `validate_labels` — IOU, class consistency, missing labels | 🔴 High |
+| 11 | Implement `generate_report` — apply GR-TOK token budget, GR-TONE normalisation | 🔴 High |
+| 12 | Wire all four `assets/` files into ADK retrieval tool for RAG | 🟡 Medium |
+| 13 | GitHub Actions CI for `pytest -m "unit"` on PRs | 🟡 Medium |
+| 14 | Kaggle API integration for dataset download + submission | 🟢 Low |
 
 ---
 
-*Last updated: 2026-06-20 | Phase 9 complete — knowledge assets fully populated*
+*Last updated: 2026-06-20 | Phase 10 complete — enterprise PII cleaner and log simulator built*

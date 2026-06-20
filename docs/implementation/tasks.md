@@ -103,7 +103,7 @@
 - [x] Create `docs/implementation/implementation_plan.md`
 - [x] Create `docs/implementation/tasks.md` (this file)
 - [x] Create `docs/implementation/walkthrough.md`
-- [ ] Commit and push `docs/implementation/` to remote
+- [x] Commit and push `docs/implementation/` to remote (commit `b331ff6`)
 
 ---
 
@@ -122,31 +122,64 @@
   - Section 2 (GR-LEAK): System prompt leakage, PII re-exposure, credential/secret detection, internal infra suppression
   - Section 3 (GR-TONE): Emotional hyperbole stripping (prohibited phrase dictionary + neutral replacements), certainty calibration, passive-voice compliance, speculation prohibition
   - Section 4: Enforcement summary table (11 guardrail IDs, CRITICAL vs STANDARD)
-- [ ] Commit and push Phase 9 assets to remote
+- [x] Commit and push Phase 9 assets to remote (commit `ffcb3cd`)
 
 ---
 
-## Pending / Future Phases
+## Phase 10 — Enterprise PII Cleaner & Log Simulator (`src/skills/pii_redactor/`) ✅
 
-### Phase 10 — Tool Implementation
+- [x] Create `src/skills/pii_redactor/skill.md` — Tool manifest for `enterprise_av_security_pii_cleaner`
+  - Strict JSON input schema: single field `raw_log_text` (string, 1–65,536 chars)
+  - Full output schema with `redacted_text`, `pii_found`, `redaction_summary`, char counts
+  - Regex pattern reference for all 3 PII categories
+  - CLI usage example with expected output
+  - Security notes: deterministic-only, defence-in-depth pipeline diagram
+  - Integration pipeline diagram: `raw_input → enterprise_cleaner → Presidio → LLM → GR-LEAK-002`
+- [x] Create `src/skills/pii_redactor/enterprise_av_security_pii_cleaner.py`
+  - `EnterpriseAVSecurityPIICleaner` class — 3-pass deterministic regex engine
+  - Pass 1 GPS coordinates: labelled (`lat/lon:`), keyword-prefixed (`GPS:/pos:`), bare decimal (≥4 dp)
+  - Pass 2 Licence plates: keyword-anchored (`plate:/unit:/reg:`) + standalone format matching
+  - Pass 3 Driver names: prefix-anchored (`Safety Driver:/SD/Operator:/Engineer:` + optional title)
+  - `CleanerResult` dataclass with per-category counts, `pii_found`, `redaction_details`
+  - `clean_pii()` — ADK `FunctionTool` adapter (plain dict return, rich docstring)
+  - Module-level singleton `_cleaner` (thread-safe, regex is read-only)
+  - Typed placeholders: `[DRIVER_REDACTED]`, `[PLATE_REDACTED]`, `[GPS_REDACTED]`
+  - CLI quick-test block (`if __name__ == "__main__"`)
+- [x] Create `src/skills/pii_redactor/data_simulator.py`
+  - `AVDisengagementLogSimulator` class — uses `gemini-1.5-flash`
+  - Prompt engineering: instructs model to embed all 3 PII types naturally in messy prose
+  - 12 randomised scenario seeds (pedestrian jaywalking, wet road, construction zone, etc.)
+  - 20-name driver name pool (diverse, realistic)
+  - 10-plate pool (US/EU formats)
+  - 5 GPS regions (SF Bay Area: downtown, mission, SoMa, financial, marina)
+  - `generate(seed=)` — single log with reproducible seed
+  - `generate_batch(count=, seed=)` — batch generation (max 50)
+  - Returns: `log_text`, `metadata.injected_pii` (ground truth for eval), `generated_at`, `model`
+  - CLI: `--count`, `--seed`, `--save` (auto-saves JSONL to `tests/evaluation/datasets/`), `--temperature`, `--print-metadata`
+  - Graceful import guard if `google-generativeai` not installed
+- [ ] Commit and push Phase 10 files to remote
+
+---
+
+### Phase 11 — Tool Implementation
 - [ ] Implement `validate_telemetry` — sensor range checks, dropout detection, timestamp gap analysis (referencing AV-REG-102 MOT thresholds)
 - [ ] Implement `validate_labels` — IOU checks, class distribution, category consistency
 - [ ] Implement `generate_report` — severity aggregation, Kaggle JSONL report formatter (applying GR-TOK and GR-TONE guardrails)
 
-### Phase 11 — RAG Knowledge Base
+### Phase 12 — RAG Knowledge Base
 - [ ] Wire `assets/rules.txt`, `assets/fleet_history.txt`, `assets/guardrails.txt`, and `assets/knowledge/av_domain_glossary.md` into `google.adk.tools.retrieval` or equivalent
 - [ ] Embed safety rules and guardrails into agent context at startup
 
-### Phase 12 — CI/CD
+### Phase 13 — CI/CD
 - [ ] Add GitHub Actions workflow for `pytest -m "unit"` on every PR
 - [ ] Add pre-commit hooks: `ruff`, `mypy`
 - [ ] Add Dependabot for `pyproject.toml` dependency updates
 
-### Phase 13 — Kaggle Integration
+### Phase 14 — Kaggle Integration
 - [ ] Add Kaggle API client for dataset download (`kaggle competitions download`)
 - [ ] Add data pipeline for ingesting AV scene files
 - [ ] Add submission generator (`generate_report` → Kaggle JSONL format)
 
 ---
 
-*Last updated: 2026-06-20 | Phase 9 complete*
+*Last updated: 2026-06-20 | Phase 10 complete*
