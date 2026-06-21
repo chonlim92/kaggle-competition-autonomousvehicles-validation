@@ -129,7 +129,7 @@ from src.skills.pii_redactor.enterprise_av_security_pii_cleaner import (
     PLACEHOLDER_GPS,
     PLACEHOLDER_PLATE,
 )
-from src.agent.hooks import PIIEnforcementHook
+
 
 # Simulator — requires google-generativeai (Tab 1 only)
 from src.skills.pii_redactor.data_simulator import (
@@ -249,9 +249,7 @@ if _ADK_AVAILABLE:
             ),
             instruction=COMPLIANCE_SYSTEM_PROMPT,
             # No tools registered on this agent — it is a pure reasoning/generation agent.
-            # Tool use (PII cleaning) happened upstream BEFORE this agent sees any text.
             tools=[],
-            hooks=[PIIEnforcementHook()],
         )
 
         _session_service = InMemorySessionService()
