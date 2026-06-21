@@ -8,8 +8,8 @@ license = { text = "MIT" }
 
 dependencies = [
     "google-adk==0.1.0",
-    # Fix ADK dependency conflict
-    "opentelemetry-semantic-conventions==0.48b0",
+    # Fix ADK dependency conflict (relaxed to >=0.48b0)
+    "opentelemetry-semantic-conventions>=0.48b0",
     # Google Generative AI SDK
     "google-generativeai>=0.8.0",
     # Environment variable loading
