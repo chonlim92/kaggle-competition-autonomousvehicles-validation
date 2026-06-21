@@ -14,7 +14,7 @@ def generate_report(validation_results: str) -> dict:
         Structured report dict ready for Kaggle submission.
     """
     logger.info("generate_report called")
-    
+
     try:
         data = json.loads(validation_results)
     except json.JSONDecodeError as e:
@@ -40,14 +40,14 @@ def generate_report(validation_results: str) -> dict:
 
     total_records = len(results_list)
     failed_records = sum(1 for r in results_list if r.get("status") == "failed")
-    
+
     severity_counts = {"CRITICAL": 0, "HIGH": 0, "MEDIUM": 0, "LOW": 0}
     all_issues = []
 
     for result in results_list:
         issues = result.get("issues", [])
         all_issues.extend(issues)
-        
+
         severities = result.get("severity", {})
         for issue_sev in severities.values():
             if issue_sev in severity_counts:
@@ -61,6 +61,6 @@ def generate_report(validation_results: str) -> dict:
         "all_issues_found": list(set(all_issues)),
         "message": "Report generated successfully. Please review critical issues."
     }
-    
+
     # GR-TOK/GR-TONE simulated compliance: keeping the report concise and factual.
     return report

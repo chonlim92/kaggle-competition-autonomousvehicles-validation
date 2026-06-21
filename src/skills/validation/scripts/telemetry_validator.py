@@ -15,7 +15,7 @@ def validate_telemetry(record_id: str, telemetry_json: str) -> dict:
         Validation result dict with `issues` list and `severity` map.
     """
     logger.info("validate_telemetry called", record_id=record_id)
-    
+
     try:
         data = json.loads(telemetry_json)
     except json.JSONDecodeError as e:
@@ -41,7 +41,7 @@ def validate_telemetry(record_id: str, telemetry_json: str) -> dict:
     if camera_fps is not None and camera_fps == 0:
         issues.append("SENSOR_DROPOUT")
         severities["SENSOR_DROPOUT"] = "CRITICAL"
-        
+
     # Timestamp gap anomaly
     timestamp_gap_ms = data.get("timestamp_gap_ms")
     if timestamp_gap_ms is not None and timestamp_gap_ms > 500:
@@ -56,7 +56,7 @@ def validate_telemetry(record_id: str, telemetry_json: str) -> dict:
         severities["INCONSISTENT_VELOCITY"] = "HIGH"
 
     status = "failed" if issues else "passed"
-    
+
     return {
         "record_id": record_id,
         "status": status,

@@ -6,7 +6,7 @@ logger = structlog.get_logger(__name__)
 class KagglePipeline:
     def __init__(self, competition_name: str = "autonomousvehicles-validation"):
         self.competition_name = competition_name
-        
+
     def download_dataset(self, download_path: str = "data/raw"):
         """
         Download the competition dataset using the Kaggle API.
@@ -17,10 +17,10 @@ class KagglePipeline:
         except ImportError:
             logger.error("Kaggle API client not installed. Please run `pip install kaggle`")
             return False
-            
+
         logger.info("Downloading Kaggle dataset", competition=self.competition_name)
         os.makedirs(download_path, exist_ok=True)
-        
+
         try:
             kaggle.api.authenticate()
             kaggle.api.competition_download_files(self.competition_name, path=download_path, quiet=False)
@@ -35,7 +35,7 @@ class KagglePipeline:
         Generate a Kaggle-compliant JSONL submission file from validation reports.
         """
         import json
-        
+
         logger.info("Generating Kaggle submission", output_file=output_file)
         try:
             with open(output_file, "w", encoding="utf-8") as f:

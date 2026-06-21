@@ -15,7 +15,7 @@ def validate_labels(record_id: str, labels_json: str) -> dict:
         Validation result dict with `issues` list and `severity` map.
     """
     logger.info("validate_labels called", record_id=record_id)
-    
+
     try:
         data = json.loads(labels_json)
     except json.JSONDecodeError as e:
@@ -31,7 +31,7 @@ def validate_labels(record_id: str, labels_json: str) -> dict:
     severities = {}
 
     annotations = data.get("annotations", [])
-    
+
     # Check for empty annotations
     if not annotations:
         issues.append("MISSING_LABEL")
@@ -62,7 +62,7 @@ def validate_labels(record_id: str, labels_json: str) -> dict:
                 tracking_id_categories[track_id] = cat
 
     status = "failed" if issues else "passed"
-    
+
     return {
         "record_id": record_id,
         "status": status,
