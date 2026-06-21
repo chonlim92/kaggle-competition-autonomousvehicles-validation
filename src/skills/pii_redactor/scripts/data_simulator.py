@@ -56,7 +56,7 @@ except ImportError:
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 
-MODEL_ID = "gemini-1.5-flash"
+MODEL_ID = "gemini-1.5-flash-latest"
 
 # Disengagement scenario seeds for variety
 _SCENARIO_SEEDS = [

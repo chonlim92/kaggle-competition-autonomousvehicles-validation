@@ -148,7 +148,7 @@ from src.agent.config import get_config
 # This is a deliberate upgrade from the orchestrator's default (gemini-2.0-flash)
 # because compliance report generation requires longer structured reasoning chains
 # and benefits from the higher-context window of gemini-1.5-pro.
-COMPLIANCE_MODEL = "gemini-1.5-pro"
+COMPLIANCE_MODEL = "gemini-1.5-pro-latest"
 
 # System prompt for the compliance audit agent (Tab 2).
 # Note: this prompt instructs the model to output a FORMAL corporate report.
