@@ -368,13 +368,13 @@ def generate_synthetic_log() -> tuple[str, str, str]:
             log_text: str = result["log_text"]
             meta = result["metadata"]
             pii = meta["injected_pii"]
-            event_id = pii.get("event_id", "unknown")
+            case_id = pii.get("case_id", "unknown")
 
-            _EVENT_STORE[event_id] = pii
+            _EVENT_STORE[case_id] = pii
 
             meta_display = (
                 f"--- LOG {i} ---\n"
-                f"Event ID: {event_id}\n"
+                f"Case ID: {case_id}\n"
                 f"  Driver name  : {pii['driver_name']}\n"
                 f"  Primary plate: {pii['plate_primary']}\n"
                 f"  Witness plate: {pii['plate_witness']}\n"
@@ -386,7 +386,7 @@ def generate_synthetic_log() -> tuple[str, str, str]:
 
             # Plot on map
             tooltip_text = (
-                f"<b>Event ID:</b> {event_id}<br>"
+                f"<b>Case ID:</b> {case_id}<br>"
                 f"<b>Driver:</b> {pii['driver_name']}<br>"
                 f"<b>Unit:</b> {pii['plate_primary']}<br>"
                 f"<b>Scenario:</b> {meta['scenario'][:60]}..."
@@ -514,18 +514,18 @@ def run_secure_validation(raw_log_text: str, session_id: str) -> tuple[str, str,
         total_redactions=summary["total"],
     )
 
-    # Extract Event ID, lookup coordinates securely, and inject API context for the agent
-    event_id_match = re.search(r"EVT-[0-9A-F]{8}", raw_log_text)
-    event_id = None
+    # Extract Case ID, lookup coordinates securely, and inject API context for the agent
+    case_id_match = re.search(r"EVT-[0-9A-F]{8}", raw_log_text)
+    case_id = None
     lat = None
     lon = None
     map_context = {}
     street_view_html = ""
 
-    if event_id_match:
-        event_id = event_id_match.group(0)
-        if event_id in _EVENT_STORE:
-            pii_data = _EVENT_STORE[event_id]
+    if case_id_match:
+        case_id = case_id_match.group(0)
+        if case_id in _EVENT_STORE:
+            pii_data = _EVENT_STORE[case_id]
             lat = pii_data['gps_primary']['lat']
             lon = pii_data['gps_primary']['lon']
             map_context = _fetch_google_maps_context(lat, lon)
@@ -580,7 +580,7 @@ def run_secure_validation(raw_log_text: str, session_id: str) -> tuple[str, str,
     # Create map
     map_html = ""
 
-    if event_id:
+    if case_id:
         if lat is not None and lon is not None:
             # Determine color based on audit report
             marker_color = "green"
@@ -597,7 +597,7 @@ def run_secure_validation(raw_log_text: str, session_id: str) -> tuple[str, str,
             lanes = map_context.get("lanes", "Unknown")
 
             tooltip_text = (
-                f"<b>Event ID:</b> {event_id}<br>"
+                f"<b>Case ID:</b> {case_id}<br>"
                 f"<b>Driver:</b> [MASKED]<br>"
                 f"<b>Unit:</b> [MASKED]<br>"
                 f"<b>GPS:</b> [MASKED]<br>"
@@ -616,9 +616,9 @@ def run_secure_validation(raw_log_text: str, session_id: str) -> tuple[str, str,
             ).add_to(m)
             map_html = m._repr_html_()
         else:
-            map_html = f"<div style='padding:20px; color:red;'>Event ID {event_id} not found in secure store. Cannot retrieve GPS coordinates for display.</div>"
+            map_html = f"<div style='padding:20px; color:red;'>Case ID {case_id} not found in secure store. Cannot retrieve GPS coordinates for display.</div>"
     else:
-        map_html = "<div style='padding:20px; color:orange;'>No Event ID detected in the log text. GPS cannot be securely retrieved.</div>"
+        map_html = "<div style='padding:20px; color:orange;'>No Case ID detected in the log text. GPS cannot be securely retrieved.</div>"
 
     return redaction_banner, purified_context, compliance_report, map_html
 
@@ -676,7 +676,7 @@ def execute_evaluation_suite() -> str:
         suite1_passed = 0
         for case in cases:
             total_tests += 1
-            event_id = case.get("event_id", "?")
+            case_id = case.get("case_id", "?")
             raw_input = case.get("input", "")
             pii_strings: list[str] = case.get("pii_strings", [])
 
@@ -696,7 +696,7 @@ def execute_evaluation_suite() -> str:
 
             summary_dict = clean_result["redaction_summary"]
             results.append(
-                f"  {icon} [{event_id:15s}]  "
+                f"  {icon} [{case_id:15s}]  "
                 f"redacted={summary_dict['total']:2d}  "
                 f"missed_pii={len(missed)}  "
                 f"tags={case.get('tags', [])}"
@@ -1149,7 +1149,6 @@ with gr.Blocks(  # pragma: no cover
             ),
             lines=12,
             interactive=False,
-            show_copy_button=True,
         )
 
         # ── Stage 2 output: compliance report ────────────────────────────────
@@ -1164,7 +1163,7 @@ with gr.Blocks(  # pragma: no cover
             tab2_map = gr.HTML(label="Validation GPS Plot")
 
         gr.Markdown("""
-        *⚠️ Note: The GPS location plotted above was redacted and hidden from the LLM model for privacy reasons. It was retrieved securely via Event ID from the raw input exclusively for this map display.*
+        *⚠️ Note: The GPS location plotted above was redacted and hidden from the LLM model for privacy reasons. It was retrieved securely via Case ID from the raw input exclusively for this map display.*
         """)
 
         # Wire button → backend → all three outputs
@@ -1202,7 +1201,6 @@ with gr.Blocks(  # pragma: no cover
             label="📈 Evaluation Results  [ Pass/Fail metrics — raw output ]",
             lines=40,
             interactive=False,
-            show_copy_button=True,
             placeholder="Click 'Execute Trajectory & PII Leak Audit Suite' to run all test suites...",
         )
 

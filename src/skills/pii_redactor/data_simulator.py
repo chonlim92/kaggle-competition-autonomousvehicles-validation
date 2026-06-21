@@ -116,7 +116,7 @@ def _build_generation_prompt(
     lon2: float,
     timestamp: str,
     fleet_unit: str,
-    event_id: str,
+    case_id: str,
 ) -> str:
     """
     Construct the Gemini generation prompt for a single disengagement log.
@@ -153,8 +153,8 @@ naturally in the text (not as a structured list):
    - Use different notation for each: one as a bare decimal pair, one with a
      label like "GPS:", "lat/lon:", "pos:", "coord:", or "location:"
 
-4. EVENT ID: {event_id}
-   - Must explicitly include "Event ID: {event_id}" somewhere in the log.
+4. EVENT ID: {case_id}
+   - Must explicitly include "Case ID: {case_id}" somewhere in the log.
 
 SCENARIO: {scenario}
 
@@ -263,9 +263,9 @@ class AVDisengagementLogSimulator:
 
         now = datetime.now(timezone.utc)
         timestamp = now.strftime("%Y-%m-%dT%H:%M:%SZ")
-        
+
         import uuid
-        event_id = f"EVT-{uuid.uuid4().hex[:8].upper()}"
+        case_id = f"EVT-{uuid.uuid4().hex[:8].upper()}"
 
         prompt = _build_generation_prompt(
             scenario=scenario,
@@ -278,7 +278,7 @@ class AVDisengagementLogSimulator:
             lon2=lon2,
             timestamp=timestamp,
             fleet_unit=fleet_unit,
-            event_id=event_id,
+            case_id=case_id,
         )
 
         logger.debug(
@@ -295,7 +295,7 @@ class AVDisengagementLogSimulator:
         metadata = {
             "scenario": scenario,
             "injected_pii": {
-                "event_id": event_id,
+                "case_id": case_id,
                 "driver_name": driver_name,
                 "plate_primary": plate_1,
                 "plate_witness": plate_2,
