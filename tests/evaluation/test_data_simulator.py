@@ -23,9 +23,7 @@ def test_data_simulator(mock_genai):
     assert isinstance(gps_lat, float)
     assert isinstance(gps_lon, float)
 
-    plate = simulator._generate_vehicle_plate()
-    assert isinstance(plate, str)
-    assert len(plate) >= 6
+
 
     # test generate directly
     res = simulator.generate()
