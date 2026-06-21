@@ -5,8 +5,9 @@ from src.skills.kaggle.scripts.pipeline import KagglePipeline
 
 def test_kaggle_pipeline_download_success():
     pipeline = KagglePipeline("test-comp")
+    mock_kaggle = MagicMock()
     with patch("os.makedirs"), \
-         patch("src.skills.kaggle.scripts.pipeline.kaggle") as mock_kaggle:
+         patch.dict("sys.modules", {"kaggle": mock_kaggle}):
         result = pipeline.download_dataset("data/test")
         assert result is True
         mock_kaggle.api.authenticate.assert_called_once()
@@ -14,8 +15,9 @@ def test_kaggle_pipeline_download_success():
 
 def test_kaggle_pipeline_download_failure():
     pipeline = KagglePipeline()
+    mock_kaggle = MagicMock()
     with patch("os.makedirs"), \
-         patch("src.skills.kaggle.scripts.pipeline.kaggle") as mock_kaggle:
+         patch.dict("sys.modules", {"kaggle": mock_kaggle}):
         mock_kaggle.api.authenticate.side_effect = Exception("Auth failed")
         result = pipeline.download_dataset("data/test")
         assert result is False

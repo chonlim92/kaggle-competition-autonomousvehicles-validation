@@ -19,9 +19,9 @@ def test_data_simulator(mock_genai):
     assert "log_text" in result[0]
     assert result[0]["log_text"] == "Simulated log generated."
 
-    gps = simulator._get_random_gps()
-    assert "lat" in gps
-    assert "lon" in gps
+    gps_lat, gps_lon = simulator._random_gps({"lat_range": (34.0, 34.1), "lon_range": (-118.5, -118.4)})
+    assert isinstance(gps_lat, float)
+    assert isinstance(gps_lon, float)
 
     plate = simulator._generate_vehicle_plate()
     assert isinstance(plate, str)
