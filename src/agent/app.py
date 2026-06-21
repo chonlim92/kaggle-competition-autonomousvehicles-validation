@@ -13,7 +13,7 @@ Architecture overview
                         │                                                    │
                         │  Tab 1: Synthetic Data Generation Engine          │
                         │    └─► AVDisengagementLogSimulator                │
-                        │          (gemini-1.5-flash, data_simulator.py)    │
+                        │          (gemini-2.0-flash, data_simulator.py)    │
                         │                                                    │
                         │  Tab 2: Secure Validation Audit Portal            │
                         │    ├─► EnterpriseAVSecurityPIICleaner  (regex)    │
@@ -42,7 +42,7 @@ Data Flow — Tab 2 (critical path):
   structured compliance report  ◄── displayed as markdown
 
 Key design decisions:
-  - gemini-1.5-flash used for simulator (Tab 1) — high-throughput, low cost
+  - gemini-2.0-flash used for simulator (Tab 1) — high-throughput, low cost
   - gemini-1.5-pro used for compliance agent (Tab 2) — higher reasoning quality
     required for interpreting AV safety rules and producing formal reports
   - PII cleaner ALWAYS runs before ANY text reaches the LLM (defence-in-depth)
@@ -215,7 +215,7 @@ if _GENAI_AVAILABLE:
     logger.info("Gemini API configured", key_prefix=cfg.gemini_api_key[:8] + "...")
 
 # ── Data Simulator (Tab 1) ────────────────────────────────────────────────────
-# AVDisengagementLogSimulator uses gemini-1.5-flash.
+# AVDisengagementLogSimulator uses gemini-2.0-flash.
 # High temperature (0.95) is used to produce diverse, realistic log text.
 # This simulator is intentionally separate from the compliance model — the
 # flash model is cheaper and faster for creative data generation tasks.
@@ -480,7 +480,7 @@ def run_secure_validation(raw_log_text: str, session_id: str) -> tuple[str, str,
     details = clean_result.get("redaction_details", [])
 
     if pii_found:
-        status_icon = "🔒"
+        status_icon = ""
         status_msg = f"SECURED — {summary['total']} PII entity/entities redacted"
     else:
         status_icon = "✅"
@@ -662,7 +662,7 @@ def execute_evaluation_suite() -> str:
     results.append("=" * 70)
 
     # ── Test Suite 1: PII Redaction Recall (JSONL dataset) ────────────────────
-    results.append("\n📋 SUITE 1 — PII REDACTION RECALL (JSONL EVAL DATASET)")
+    results.append("\n SUITE 1 — PII REDACTION RECALL (JSONL EVAL DATASET)")
     results.append("─" * 70)
 
     pii_jsonl_path = _EVAL_DATASET_DIR / "pii_redaction.jsonl"
@@ -711,7 +711,7 @@ def execute_evaluation_suite() -> str:
         )
 
     # ── Test Suite 2: Enterprise Cleaner Smoke Tests ───────────────────────────
-    results.append("\n🧪 SUITE 2 — ENTERPRISE CLEANER SMOKE TESTS")
+    results.append("\n SUITE 2 — ENTERPRISE CLEANER SMOKE TESTS")
     results.append("─" * 70)
 
     SMOKE_TESTS: list[dict[str, Any]] = [
@@ -805,7 +805,7 @@ def execute_evaluation_suite() -> str:
     )
 
     # ── Test Suite 3: Guardrail Boundary Verification ─────────────────────────
-    results.append("\n🛡️  SUITE 3 — GUARDRAIL RULE BOUNDARY VERIFICATION (GR-TOK / GR-TONE)")
+    results.append("\n️  SUITE 3 — GUARDRAIL RULE BOUNDARY VERIFICATION (GR-TOK / GR-TONE)")
     results.append("─" * 70)
     results.append("  Verifies that the PII cleaner does NOT strip non-PII technical content.")
     results.append("  (Guardrail enforcement is a separate output-layer concern.)")
@@ -887,104 +887,142 @@ def execute_evaluation_suite() -> str:
 _CUSTOM_CSS = """
 /* ── Global ────────────────────────────────────────────────────── */
 body, .gradio-container {
-    background: #0d1117 !important;
+    background: linear-gradient(135deg, #09090b 0%, #18181b 100%) !important;
     font-family: 'Inter', 'Segoe UI', system-ui, sans-serif !important;
+    color: #e4e4e7 !important;
+}
+
+/* ── Glassmorphism Mixin ────────────────────────────────────────── */
+.glass-panel {
+    background: rgba(24, 24, 27, 0.6) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
 }
 
 /* ── Header ────────────────────────────────────────────────────── */
 .app-header {
-    background: linear-gradient(135deg, #1a2332 0%, #0d1829 50%, #13192a 100%);
-    border: 1px solid #2d4a6e;
-    border-radius: 12px;
-    padding: 24px 32px;
-    margin-bottom: 8px;
-    box-shadow: 0 4px 24px rgba(0,120,255,0.12);
+    background: rgba(18, 18, 20, 0.7) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-radius: 16px;
+    padding: 32px 40px;
+    margin-bottom: 16px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
 }
 .app-header h1 {
-    color: #e6f0ff !important;
-    font-size: 1.6rem !important;
-    font-weight: 700 !important;
-    margin: 0 0 4px 0 !important;
-    letter-spacing: -0.5px;
+    color: #f4f4f5 !important;
+    font-size: 2rem !important;
+    font-weight: 800 !important;
+    margin: 0 0 8px 0 !important;
+    letter-spacing: -0.8px;
+    background: -webkit-linear-gradient(45deg, #ffffff, #a1a1aa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 .app-header p {
-    color: #7ea8d0 !important;
-    font-size: 0.875rem !important;
+    color: #a1a1aa !important;
+    font-size: 0.95rem !important;
     margin: 0 !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.2px;
 }
 
 /* ── Tabs ──────────────────────────────────────────────────────── */
 .tab-nav button {
-    background: #161b22 !important;
-    color: #8b9ab5 !important;
-    border: 1px solid #21293a !important;
-    border-radius: 8px 8px 0 0 !important;
-    font-weight: 500 !important;
-    font-size: 0.9rem !important;
-    padding: 10px 20px !important;
-    transition: all 0.2s ease !important;
+    background: rgba(24, 24, 27, 0.4) !important;
+    color: #a1a1aa !important;
+    border: 1px solid transparent !important;
+    border-radius: 12px 12px 0 0 !important;
+    font-weight: 600 !important;
+    font-size: 0.95rem !important;
+    padding: 14px 24px !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 .tab-nav button.selected, .tab-nav button:hover {
-    background: #1f2d42 !important;
-    color: #60a5fa !important;
-    border-color: #2563eb !important;
+    background: rgba(39, 39, 42, 0.8) !important;
+    color: #f4f4f5 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-bottom: none !important;
+    backdrop-filter: blur(8px) !important;
 }
 
 /* ── Buttons ───────────────────────────────────────────────────── */
 .generate-btn button, .audit-btn button, .eval-btn button {
-    background: linear-gradient(135deg, #1d4ed8, #1e40af) !important;
-    color: #fff !important;
-    border: none !important;
-    border-radius: 8px !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 12px !important;
     font-weight: 600 !important;
-    font-size: 0.95rem !important;
-    padding: 12px 24px !important;
-    transition: all 0.2s ease !important;
-    box-shadow: 0 2px 12px rgba(37,99,235,0.3) !important;
+    font-size: 1rem !important;
+    padding: 14px 28px !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
+    letter-spacing: 0.3px !important;
 }
 .generate-btn button:hover, .audit-btn button:hover, .eval-btn button:hover {
-    background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 4px 20px rgba(37,99,235,0.45) !important;
+    background: rgba(255, 255, 255, 0.15) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 24px rgba(255, 255, 255, 0.1) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
 }
 
 /* ── Textboxes / inputs ────────────────────────────────────────── */
 textarea, .block.padded {
-    background: #161b22 !important;
-    border: 1px solid #21293a !important;
-    border-radius: 8px !important;
-    color: #c9d1d9 !important;
+    background: rgba(9, 9, 11, 0.6) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 12px !important;
+    color: #e4e4e7 !important;
     font-family: 'JetBrains Mono', 'Fira Code', monospace !important;
-    font-size: 0.82rem !important;
+    font-size: 0.85rem !important;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+    transition: border-color 0.3s ease !important;
+}
+textarea:focus {
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    outline: none !important;
 }
 .label-wrap span {
-    color: #7ea8d0 !important;
+    color: #a1a1aa !important;
     font-weight: 600 !important;
     font-size: 0.85rem !important;
     text-transform: uppercase !important;
-    letter-spacing: 0.5px !important;
+    letter-spacing: 0.8px !important;
+    margin-bottom: 6px !important;
 }
 
 /* ── Markdown panels ───────────────────────────────────────────── */
 .prose, .markdown-text {
-    background: #161b22 !important;
-    border: 1px solid #21293a !important;
-    border-radius: 8px !important;
-    padding: 16px !important;
-    color: #c9d1d9 !important;
+    background: rgba(24, 24, 27, 0.4) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-radius: 12px !important;
+    padding: 24px !important;
+    color: #d4d4d8 !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
 }
-.prose h2 { color: #60a5fa !important; border-bottom: 1px solid #21293a !important; }
-.prose h3 { color: #93c5fd !important; }
-.prose table { border-collapse: collapse !important; width: 100% !important; }
-.prose th { background: #1f2d42 !important; color: #60a5fa !important; padding: 8px !important; }
-.prose td { border: 1px solid #21293a !important; padding: 8px !important; color: #c9d1d9 !important; }
+.prose h2 { color: #f4f4f5 !important; border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important; font-weight: 700 !important; padding-bottom: 8px !important; }
+.prose h3 { color: #e4e4e7 !important; font-weight: 600 !important; }
+.prose table { border-collapse: collapse !important; width: 100% !important; margin-top: 16px !important; }
+.prose th { background: rgba(255, 255, 255, 0.05) !important; color: #f4f4f5 !important; padding: 12px !important; font-weight: 600 !important; }
+.prose td { border: 1px solid rgba(255, 255, 255, 0.05) !important; padding: 12px !important; color: #d4d4d8 !important; }
 
 /* ── Status indicator ──────────────────────────────────────────── */
 .status-banner textarea {
-    background: #0d1f12 !important;
-    border-color: #166534 !important;
-    color: #4ade80 !important;
-    font-size: 0.78rem !important;
+    background: rgba(6, 78, 59, 0.2) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    border-color: rgba(52, 211, 153, 0.3) !important;
+    color: #6ee7b7 !important;
+    font-size: 0.8rem !important;
+    box-shadow: inset 0 2px 10px rgba(6, 78, 59, 0.1) !important;
 }
 """
 
@@ -1016,10 +1054,10 @@ with gr.Blocks(  # pragma: no cover
     # ── Application header ────────────────────────────────────────────────────
     gr.HTML("""
     <div class="app-header">
-        <h1>🚗 AV Validation Agent — Enterprise Dashboard</h1>
+        <h1> AV Validation Agent — Enterprise Dashboard</h1>
         <p>
             ADK 2.0 multi-agent pipeline &nbsp;|&nbsp;
-            gemini-1.5-pro (compliance) &nbsp;•&nbsp; gemini-1.5-flash (simulator) &nbsp;|&nbsp;
+            gemini-1.5-pro (compliance) &nbsp;•&nbsp; gemini-2.0-flash (simulator) &nbsp;|&nbsp;
             Enterprise PII Cleaner &nbsp;+&nbsp; Regex Guardrails
         </p>
     </div>
@@ -1032,7 +1070,7 @@ with gr.Blocks(  # pragma: no cover
 
         gr.Markdown("""
         ### Procedural AV Disengagement Log Generator
-        Generates realistic, messy vehicle disengagement field notes via **gemini-1.5-flash**.
+        Generates realistic, messy vehicle disengagement field notes via **gemini-2.0-flash**.
         Each log intentionally embeds driver names, licence plates, and GPS coordinates
         for PII redaction pipeline testing.
         """)
@@ -1043,7 +1081,7 @@ with gr.Blocks(  # pragma: no cover
                 # This is deliberately labelled "RAW — contains PII" to signal
                 # to developers that this text should NOT go directly to a model.
                 tab1_log_output = gr.Textbox(
-                    label="🔴 Generated Raw Log  [ RAW — CONTAINS PII — DO NOT FORWARD TO LLM ]",
+                    label=" Generated Raw Log  [ RAW — CONTAINS PII — DO NOT FORWARD TO LLM ]",
                     lines=22,
                     max_lines=40,
                     placeholder=(
@@ -1060,7 +1098,7 @@ with gr.Blocks(  # pragma: no cover
                 # This gives developers immediate visibility into what PII was
                 # injected, enabling manual verification and recall measurement.
                 tab1_meta_output = gr.Textbox(
-                    label="🔍 Injected PII Ground Truth  [ Evaluation Reference ]",
+                    label=" Injected PII Ground Truth  [ Evaluation Reference ]",
                     lines=12,
                     placeholder="Simulator metadata will appear here...",
                     interactive=False,
@@ -1079,7 +1117,7 @@ with gr.Blocks(  # pragma: no cover
             )
 
         gr.Markdown("""
-        > **Pipeline note**: Generated logs use `gemini-1.5-flash` at temperature 0.95.
+        > **Pipeline note**: Generated logs use `gemini-2.0-flash` at temperature 0.95.
         > Scenario, driver name, plates, and GPS region are randomised each call.
         > Copy the raw log to **Tab 2** to run the PII cleaning + compliance audit pipeline.
         """)
@@ -1094,7 +1132,7 @@ with gr.Blocks(  # pragma: no cover
     # ══════════════════════════════════════════════════════════════════════════
     # TAB 2 — Secure Validation Audit Portal
     # ══════════════════════════════════════════════════════════════════════════
-    with gr.Tab("🛡️ 2. Secure Validation Audit Portal"):
+    with gr.Tab("️ 2. Secure Validation Audit Portal"):
 
         gr.Markdown("""
         ### Two-Stage Secure Validation Pipeline
@@ -1107,7 +1145,7 @@ with gr.Blocks(  # pragma: no cover
         # ── Input section ─────────────────────────────────────────────────────
         with gr.Row():
             tab2_raw_input = gr.Textbox(
-                label="📋 Paste Log Text  [ Raw input — paste any AV log here ]",
+                label=" Paste Log Text  [ Raw input — paste any AV log here ]",
                 lines=12,
                 placeholder=(
                     "Paste a raw AV disengagement log here.\n"
@@ -1123,7 +1161,7 @@ with gr.Blocks(  # pragma: no cover
         # Audit action button
         with gr.Row():
             tab2_audit_btn = gr.Button(
-                "🛡️ Run Safe Validation Audit",
+                "️ Run Safe Validation Audit",
                 variant="primary",
                 size="lg",
                 elem_classes=["audit-btn"],
@@ -1133,7 +1171,7 @@ with gr.Blocks(  # pragma: no cover
         # Displays what the cleaner found and removed.
         # Styled in green monospace to visually distinguish it from the LLM output.
         tab2_redaction_status = gr.Textbox(
-            label="🔒 PII Sanitisation Status  [ Stage 1 — Regex Cleaner Audit Log ]",
+            label=" PII Sanitisation Status  [ Stage 1 — Regex Cleaner Audit Log ]",
             lines=10,
             interactive=False,
             elem_classes=["status-banner"],
@@ -1144,7 +1182,7 @@ with gr.Blocks(  # pragma: no cover
         # security layer into the LLM layer. Labelled prominently.
         tab2_purified_context = gr.Textbox(
             label=(
-                "🔓 Purified Outbound Prompt Context  "
+                " Purified Outbound Prompt Context  "
                 "[ ✅ SECURITY CLEARED — This text only is forwarded to gemini-1.5-pro ]"
             ),
             lines=12,
@@ -1155,7 +1193,7 @@ with gr.Blocks(  # pragma: no cover
         # The ADK agent's response rendered as rich markdown.
         # Formatted as a formal corporate report per the COMPLIANCE_SYSTEM_PROMPT.
         tab2_report = gr.Markdown(
-            label="📄 Audited Corporate Compliance Report  [ Stage 2 — gemini-1.5-pro output ]",
+            label=" Audited Corporate Compliance Report  [ Stage 2 — gemini-1.5-pro output ]",
             value="> ⬆️ Paste a log and click **Run Safe Validation Audit** to generate the compliance report.",
         )
 
@@ -1177,7 +1215,7 @@ with gr.Blocks(  # pragma: no cover
     # ══════════════════════════════════════════════════════════════════════════
     # TAB 3 — Automated Performance Evaluation Suite
     # ══════════════════════════════════════════════════════════════════════════
-    with gr.Tab("📊 3. Automated Performance Evaluation"):
+    with gr.Tab(" 3. Automated Performance Evaluation"):
 
         gr.Markdown("""
         ### Automated PII Redaction & Guardrail Evaluation Suite
@@ -1190,7 +1228,7 @@ with gr.Blocks(  # pragma: no cover
         # Evaluation trigger button
         with gr.Row():
             tab3_eval_btn = gr.Button(
-                "📊 Execute Trajectory & PII Leak Audit Suite",
+                " Execute Trajectory & PII Leak Audit Suite",
                 variant="primary",
                 size="lg",
                 elem_classes=["eval-btn"],
@@ -1198,7 +1236,7 @@ with gr.Blocks(  # pragma: no cover
 
         # Primary results display
         tab3_results = gr.Textbox(
-            label="📈 Evaluation Results  [ Pass/Fail metrics — raw output ]",
+            label=" Evaluation Results  [ Pass/Fail metrics — raw output ]",
             lines=40,
             interactive=False,
             placeholder="Click 'Execute Trajectory & PII Leak Audit Suite' to run all test suites...",

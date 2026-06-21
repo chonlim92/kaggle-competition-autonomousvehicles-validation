@@ -3,7 +3,7 @@ src/skills/pii_redactor/data_simulator.py
 
 AV Disengagement Log Simulator
 ================================
-Uses the Gemini API (gemini-1.5-flash) to procedurally generate realistic,
+Uses the Gemini API (gemini-2.0-flash) to procedurally generate realistic,
 messy vehicle disengagement text logs on demand.
 
 Each generated log intentionally contains:
@@ -56,7 +56,7 @@ except ImportError:
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 
-MODEL_ID = "gemini-1.5-flash-latest"
+MODEL_ID = "gemini-2.0-flash"
 
 # Disengagement scenario seeds for variety
 _SCENARIO_SEEDS = [
