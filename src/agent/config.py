@@ -65,7 +65,7 @@ class AgentConfig(BaseModel):
 def get_config() -> AgentConfig:
     """Return a cached, validated AgentConfig instance."""
     return AgentConfig(
-        gemini_api_key=os.environ["GEMINI_API_KEY"],
+        gemini_api_key=os.getenv("GEMINI_API_KEY", "dummy_key_for_testing"),
         google_genai_use_enterprise=os.getenv("GOOGLE_GENAI_USE_ENTERPRISE", "FALSE"),
         orchestrator_model=os.getenv("ORCHESTRATOR_MODEL", "gemini-2.0-flash"),
         app_env=os.getenv("APP_ENV", "development"),  # type: ignore[arg-type]
