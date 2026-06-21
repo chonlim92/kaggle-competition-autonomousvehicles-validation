@@ -25,7 +25,7 @@ from google.adk.tools import FunctionTool
 
 from src.agent.config import get_config
 from src.agent.prompts import ORCHESTRATOR_SYSTEM_PROMPT
-from src.skills.pii_redactor.enterprise_av_security_pii_cleaner import clean_pii
+from src.skills.pii_redactor.scripts.enterprise_av_security_pii_cleaner import clean_pii
 
 logger = structlog.get_logger(__name__)
 
@@ -34,7 +34,7 @@ logger = structlog.get_logger(__name__)
 pii_redactor_tool = FunctionTool(func=clean_pii)
 
 
-from src.skills.validation import validate_telemetry, validate_labels, generate_report
+from src.skills.validation.scripts import validate_telemetry, validate_labels, generate_report
 from src.skills.knowledge_retrieval import retrieve_knowledge
 
 validate_telemetry_tool = FunctionTool(func=validate_telemetry)

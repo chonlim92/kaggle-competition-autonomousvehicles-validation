@@ -16,9 +16,9 @@ Purpose: Feed the enterprise_av_security_pii_cleaner with realistic test inputs
 and generate evaluation datasets for the PII redaction pipeline.
 
 Usage:
-  python -m src.skills.pii_redactor.data_simulator
-  python -m src.skills.pii_redactor.data_simulator --count 5 --save
-  python -m src.skills.pii_redactor.data_simulator --seed 42
+  python -m src.skills.pii_redactor.scripts.data_simulator
+  python -m src.skills.pii_redactor.scripts.data_simulator --count 5 --save
+  python -m src.skills.pii_redactor.scripts.data_simulator --seed 42
 
 Environment:
   Requires GEMINI_API_KEY in .env (auto-loaded via python-dotenv).
@@ -352,18 +352,18 @@ def _cli() -> None:
         epilog="""
 Examples:
   # Generate 1 log and print to stdout
-  python -m src.skills.pii_redactor.data_simulator
+  python -m src.skills.pii_redactor.scripts.data_simulator
 
   # Generate 5 logs and save to JSONL file
-  python -m src.skills.pii_redactor.data_simulator --count 5 --save
+  python -m src.skills.pii_redactor.scripts.data_simulator --count 5 --save
 
   # Generate reproducibly with seed
-  python -m src.skills.pii_redactor.data_simulator --count 3 --seed 42 --save
+  python -m src.skills.pii_redactor.scripts.data_simulator --count 3 --seed 42 --save
 
   # Pipe into the PII cleaner
-  python -m src.skills.pii_redactor.data_simulator | python -c "
+  python -m src.skills.pii_redactor.scripts.data_simulator | python -c "
     import sys, json
-    from src.skills.pii_redactor.enterprise_av_security_pii_cleaner import clean_pii
+    from src.skills.pii_redactor.scripts.enterprise_av_security_pii_cleaner import clean_pii
     data = json.load(sys.stdin)
     print(clean_pii(data['log_text'])['redacted_text'])
   "

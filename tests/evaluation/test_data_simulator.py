@@ -1,8 +1,8 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from src.skills.pii_redactor.data_simulator import AVDisengagementLogSimulator
+from src.skills.pii_redactor.scripts.data_simulator import AVDisengagementLogSimulator
 
-@patch("src.skills.pii_redactor.data_simulator.genai")
+@patch("src.skills.pii_redactor.scripts.data_simulator.genai")
 def test_data_simulator(mock_genai):
     mock_model = MagicMock()
     mock_genai.GenerativeModel.return_value = mock_model

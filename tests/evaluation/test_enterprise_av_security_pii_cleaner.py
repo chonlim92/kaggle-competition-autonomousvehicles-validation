@@ -1,5 +1,5 @@
 import pytest
-from src.skills.pii_redactor.enterprise_av_security_pii_cleaner import clean_pii
+from src.skills.pii_redactor.scripts.enterprise_av_security_pii_cleaner import clean_pii
 
 def test_enterprise_av_security_pii_cleaner():
     # Test GPS

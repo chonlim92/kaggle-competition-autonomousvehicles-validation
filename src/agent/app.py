@@ -123,7 +123,7 @@ except ImportError as _e:
     logger.warning("google-adk not available — Tab 2 compliance agent disabled", error=str(_e))
 
 # Internal skill modules — always available (pure Python, no external deps beyond regex)
-from src.skills.pii_redactor.enterprise_av_security_pii_cleaner import (
+from src.skills.pii_redactor.scripts.enterprise_av_security_pii_cleaner import (
     clean_pii,
     PLACEHOLDER_DRIVER,
     PLACEHOLDER_GPS,
@@ -132,7 +132,7 @@ from src.skills.pii_redactor.enterprise_av_security_pii_cleaner import (
 
 
 # Simulator — requires google-generativeai (Tab 1 only)
-from src.skills.pii_redactor.data_simulator import (
+from src.skills.pii_redactor.scripts.data_simulator import (
     AVDisengagementLogSimulator,
     _GENAI_AVAILABLE as _SIM_GENAI_AVAILABLE,
 )

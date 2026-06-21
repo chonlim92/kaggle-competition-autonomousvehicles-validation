@@ -17,7 +17,7 @@ from __future__ import annotations
 import structlog
 
 from src.agent.config import get_config
-from src.skills.pii_redactor.redactor import PIIRedactor, RedactionResult
+from src.skills.pii_redactor.scripts.redactor import PIIRedactor, RedactionResult
 
 logger = structlog.get_logger(__name__)
 

@@ -1,18 +1,9 @@
-# Tool Manifest — `enterprise_av_security_pii_cleaner`
-
-```yaml
-tool_name: enterprise_av_security_pii_cleaner
-version: 1.0.0
-skill_path: src/skills/pii_redactor/
-implementation: enterprise_av_security_pii_cleaner.py
-author: AV Security & Compliance Engineering
-status: ACTIVE
-classification: INTERNAL — SECURITY CRITICAL
-```
-
+---
+name: pii_redactor
+description: Redacts personally identifiable information (PII) from AV operational logs.
 ---
 
-## Overview
+# Goal
 
 The `enterprise_av_security_pii_cleaner` is a **deterministic, regex-driven PII
 sanitisation tool** for autonomous vehicle disengagement logs and safety driver field

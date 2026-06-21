@@ -21,15 +21,28 @@ Author: Chong Kiat Lim (associated by Google Antigravity)
 │   │   └── prompts.py          # System prompts & persona
 │   │
 │   └── skills/                 # 🛠️  Custom ADK tool skills
-│       └── pii_redactor/
-│           ├── __init__.py
-│           ├── skill.py        # PII redactor ADK Skill wrapper
-│           └── redactor.py     # Core redaction logic
-│
-├── assets/                     # 📚 Localized text knowledge assets
-│   ├── README.md
-│   └── knowledge/
-│       └── av_domain_glossary.md
+        ├── kaggle/
+        │   └── scripts/
+        │       └── pipeline.py
+        ├── pii_redactor/
+        │   ├── scripts/
+        │   │   ├── data_simulator.py
+        │   │   ├── enterprise_av_security_pii_cleaner.py
+        │   │   ├── redactor.py     # Core redaction logic
+        │   │   └── skill.py        # PII redactor ADK Skill wrapper
+        │   └── skill.md
+        ├── validation/
+        │   ├── scripts/
+        │   │   ├── label_validator.py
+        │   │   ├── report_generator.py
+        │   │   └── telemetry_validator.py
+        │   ├── assets/
+        │   │   ├── av_domain_glossary.md
+        │   │   ├── fleet_history.txt
+        │   │   ├── guardrails.txt
+        │   │   └── rules.txt
+        │   └── skill.md
+        └── knowledge_retrieval.py
 │
 └── tests/
     ├── __init__.py

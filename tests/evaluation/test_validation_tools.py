@@ -2,8 +2,8 @@ import json
 import pytest
 from pathlib import Path
 
-from src.skills.validation.telemetry_validator import validate_telemetry
-from src.skills.validation.label_validator import validate_labels
+from src.skills.validation.scripts.telemetry_validator import validate_telemetry
+from src.skills.validation.scripts.label_validator import validate_labels
 
 DATASETS_DIR = Path(__file__).parent / "datasets"
 
@@ -26,15 +26,15 @@ LABEL_CASES = load_jsonl("labels_valid.jsonl")
 def test_validate_telemetry(case):
     input_data = case["input"]
     expected_issues = set(case.get("expected_issues", []))
-    
+
     # Run the tool
     record_id = input_data.get("record_id", "test")
     result = validate_telemetry(record_id, json.dumps(input_data))
-    
+
     # Assert
     actual_issues = set(result.get("issues", []))
     assert actual_issues == expected_issues, f"Expected {expected_issues}, got {actual_issues}"
-    
+
     if expected_issues:
         assert result["status"] == "failed"
     else:
@@ -45,15 +45,15 @@ def test_validate_telemetry(case):
 def test_validate_labels(case):
     input_data = case["input"]
     expected_issues = set(case.get("expected_issues", []))
-    
+
     # Run the tool
     record_id = input_data.get("record_id", "test")
     result = validate_labels(record_id, json.dumps(input_data))
-    
+
     # Assert
     actual_issues = set(result.get("issues", []))
     assert actual_issues == expected_issues, f"Expected {expected_issues}, got {actual_issues}"
-    
+
     if expected_issues:
         assert result["status"] == "failed"
     else:

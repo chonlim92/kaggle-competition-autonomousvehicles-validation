@@ -5,6 +5,6 @@ PII Redactor skill package.
 Exposes the `redact_pii` function as the primary ADK FunctionTool interface.
 """
 
-from src.skills.pii_redactor.skill import redact_pii
+from src.skills.pii_redactor.scripts.skill import redact_pii
 
 __all__ = ["redact_pii"]

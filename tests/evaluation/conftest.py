@@ -43,7 +43,7 @@ def agent_config():
 @pytest.fixture(scope="session")
 def pii_redactor(agent_config):
     """Return a PIIRedactor instance configured from .env."""
-    from src.skills.pii_redactor.redactor import PIIRedactor
+    from src.skills.pii_redactor.scripts.redactor import PIIRedactor
     return PIIRedactor(
         mode=agent_config.pii_redaction_mode,
         placeholder=agent_config.pii_redaction_placeholder,
