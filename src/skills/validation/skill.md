@@ -37,3 +37,9 @@ This skill provides a suite of tools for validating autonomous vehicle disengage
 # References (optional)
 
 # Examples (optional)
+
+```python
+from src.skills.validation.scripts.telemetry_validator import validate_telemetry
+result = validate_telemetry([{"timestamp": 100, "lidar_points": 5000}])
+print(result) # Fails due to low point density
+```
