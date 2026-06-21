@@ -68,9 +68,9 @@ root_agent = LlmAgent(
 import os
 base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 try:
-    with open(os.path.join(base_dir, "assets", "rules.txt"), "r", encoding="utf-8") as f:
+    with open(os.path.join(base_dir, "src", "skills", "validation", "assets", "rules.txt"), "r", encoding="utf-8") as f:
         rules_text = f.read()
-    with open(os.path.join(base_dir, "assets", "guardrails.txt"), "r", encoding="utf-8") as f:
+    with open(os.path.join(base_dir, "src", "skills", "validation", "assets", "guardrails.txt"), "r", encoding="utf-8") as f:
         guardrails_text = f.read()
 
     root_agent.instruction += f"\n\n## Core Safety Rules\n{rules_text}\n\n## Guardrails\n{guardrails_text}"
