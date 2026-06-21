@@ -1,5 +1,7 @@
 # Autonomous Vehicles Validation Agent
 
+Author: Chong Kiat Lim (associated by Google Antigravity)
+
 > **Production-grade ADK 2.0 agent** for Kaggle's Autonomous Vehicles Validation competition.
 
 ## Project Structure
@@ -79,3 +81,22 @@ pytest tests/evaluation/ -v
 - **PII Redactor Skill** (`src/skills/pii_redactor/`) — Strips personally identifiable information from vehicle telemetry data before LLM processing
 - **Knowledge Assets** (`assets/knowledge/`) — Domain glossary, validation rules, grounding context
 - **Evaluation** (`tests/evaluation/`) — ADK `EvalSet`-compatible test suites for accuracy, safety, and latency
+
+## App Features (Gradio Dashboard)
+
+The local Gradio frontend (`src/agent/app.py`) provides an interactive interface with three tabs:
+1. **Synthetic Data Generation Engine**: Automatically generates realistic, messy AV disengagement logs embedded with randomized PII and coordinates using `gemini-1.5-flash`.
+2. **Secure Validation Audit Portal**: Simulates the compliance auditing flow. It first scrubs any PII using deterministic regex (Defence-in-Depth), then passes the purified text to the `gemini-1.5-pro` orchestrator agent to produce a structured compliance and safety report.
+3. **Automated Performance Evaluation**: Automatically runs the `adk eval` trajectory tests against the golden dataset to evaluate PII redaction accuracy and guardrail safety rule adherence locally.
+
+## Tech Stack
+
+| Component / Skill | Description |
+|-------------------|-------------|
+| **Google ADK 2.0** | Agent framework for orchestrating LLM tool calling and evaluation. |
+| **Gradio** | Frontend web UI for interactive dashboard and visualizations. |
+| **Folium** | Map rendering and interactive geographic data plotting. |
+| **Pytest** | Automated unit and integration testing suite. |
+| **Pre-commit** | Git hooks for enforcing code styling and formatting rules. |
+| **Regex Sanitisation** | Custom deterministic regex engine for PII masking (names, plates, GPS). |
+| **Gemini 1.5 Flash/Pro** | High-throughput data generation (Flash) and deep reasoning compliance (Pro). |

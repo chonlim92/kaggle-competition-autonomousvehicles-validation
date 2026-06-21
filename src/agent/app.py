@@ -1051,7 +1051,7 @@ with gr.Blocks(  # pragma: no cover
                         "Copy this text to Tab 2 → 'Paste Log Text' to run the "
                         "secure validation audit pipeline."
                     ),
-                    show_copy_button=True,
+
                     interactive=False,
                 )
 
@@ -1117,7 +1117,7 @@ with gr.Blocks(  # pragma: no cover
                     "  Camera confidence 0.67, LiDAR density 1,240 pts/m².\n"
                     "  AV-REG-102 sensor fault active — wet road surface observed."
                 ),
-                show_copy_button=True,
+
             )
 
         # Audit action button

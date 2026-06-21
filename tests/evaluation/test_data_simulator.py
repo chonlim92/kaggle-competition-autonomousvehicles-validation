@@ -12,9 +12,9 @@ def test_data_simulator(mock_genai):
 
     with patch.dict("os.environ", {"GEMINI_API_KEY": "fake_key"}):
         simulator = AVDisengagementLogSimulator()
-        
-    result = simulator.generate_batch(count=1, include_metadata=True)
-    
+
+    result = simulator.generate_batch(count=1)
+
     assert len(result) == 1
     assert "log_text" in result[0]
     assert result[0]["log_text"] == "Simulated log generated."
@@ -30,4 +30,3 @@ def test_data_simulator(mock_genai):
     # test generate directly
     res = simulator.generate()
     assert "log_text" in res
-
