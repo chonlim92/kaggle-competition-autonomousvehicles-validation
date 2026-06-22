@@ -100,8 +100,8 @@ pytest tests/evaluation/ -v
 ## App Features (Gradio Dashboard)
 
 The local Gradio frontend (`src/agent/app.py`) provides an interactive interface with three tabs:
-1. **Synthetic Data Generation Engine**: Automatically generates realistic, messy AV disengagement logs embedded with randomized PII and coordinates using `gemini-3.5-flash`.
-2. **Secure Validation Audit Portal**: Simulates the compliance auditing flow. It first scrubs any PII using deterministic regex (Defence-in-Depth), then passes the purified text to the `gemini-3.1-pro` orchestrator agent to produce a structured compliance and safety report.
+1. **Synthetic Data Generation Engine**: Automatically generates realistic, messy AV disengagement logs embedded with randomized PII and coordinates using `gemini-2.5-flash`.
+2. **Secure Validation Audit Portal**: Simulates the compliance auditing flow. It first scrubs any PII using deterministic regex (Defence-in-Depth), then passes the purified text to the `gemini-2.5-pro` orchestrator agent to produce a structured compliance and safety report.
 3. **Automated Performance Evaluation**: Automatically runs the `adk eval` trajectory tests against the golden dataset to evaluate PII redaction accuracy and guardrail safety rule adherence locally.
 
 ## Tech Stack
@@ -114,4 +114,4 @@ The local Gradio frontend (`src/agent/app.py`) provides an interactive interface
 | **Pytest** | Automated unit and integration testing suite. |
 | **Pre-commit** | Git hooks for enforcing code styling and formatting rules. |
 | **Regex Sanitisation** | Custom deterministic regex engine for PII masking (names, plates, GPS). |
-| **Gemini 3.5 Flash / 3.1 Pro** | High-throughput data generation (Flash) and deep reasoning compliance (Pro). |
+| **Gemini 2.5 Flash / 2.5 Pro** | High-throughput data generation (Flash) and deep reasoning compliance (Pro). |

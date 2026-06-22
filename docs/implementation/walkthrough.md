@@ -399,15 +399,15 @@ generate → clean → evaluate → improve regex → repeat.
 ### app.py — Design decisions
 
 **Three-Tab Functional Separation:**
-- **Tab 1: Synthetic Data Generation Engine:** Powered by `AVDisengagementLogSimulator` (using `gemini-3.5-flash`), it generates realistic, messy logs with injected PII for testing. It outputs ground truth metadata alongside the log.
+- **Tab 1: Synthetic Data Generation Engine:** Powered by `AVDisengagementLogSimulator` (using `gemini-2.5-flash`), it generates realistic, messy logs with injected PII for testing. It outputs ground truth metadata alongside the log.
 - **Tab 2: Secure Validation Audit Portal:** The core operational dashboard. It implements a strict **two-stage defence-in-depth pipeline**:
   - *Stage 1*: Deterministic PII sanitization via `enterprise_av_security_pii_cleaner`. Replaces PII with typed placeholders (`[DRIVER_REDACTED]`, etc.).
-  - *Stage 2*: The purified context is then sent to the `av_compliance_agent` (powered by `gemini-3.1-pro`) to generate a formal corporate compliance report. The LLM *never* sees the raw user input.
+  - *Stage 2*: The purified context is then sent to the `av_compliance_agent` (powered by `gemini-2.5-pro`) to generate a formal corporate compliance report. The LLM *never* sees the raw user input.
 - **Tab 3: Automated Performance Evaluation:** A built-in test suite runner executing JSONL recall tests, smoke tests, and boundary tests to ensure guardrails are enforced and PII is successfully redacted.
 
 **Model Selection & Agent Config:**
-- The compliance agent intentionally uses `gemini-3.1-pro` (defined in `COMPLIANCE_MODEL`) due to the complex reasoning required for formal incident report formatting and regulatory rule cross-referencing.
-- `gemini-3.5-flash` is relegated to data generation (Tab 1) for speed and cost efficiency.
+- The compliance agent intentionally uses `gemini-2.5-pro` (defined in `COMPLIANCE_MODEL`) due to the complex reasoning required for formal incident report formatting and regulatory rule cross-referencing.
+- `gemini-2.5-flash` is relegated to data generation (Tab 1) for speed and cost efficiency.
 
 **Security Boundaries & UI Feedback:**
 - Tab 2 includes a specific "Purified Outbound Prompt Context" textbox. This visually reassures the operator that PII has been stripped *before* generation.
@@ -502,7 +502,7 @@ src/
 ### Phase 16 — Live LLM Evaluation Constraint Testing
 - **Golden Dataset**: Engineered `test_golden_dataset.py` with 38 total integration and constraint tests to ensure PII and safety logic covers edge cases.
 - **Enforcement Hooks**: Authored `PIIEnforcementHook` directly integrating with the ADK workflow to intercept raw incoming messages and redact outgoing model completions.
-- **Automated Validation**: Pushed full suite of constraint validations evaluating against the `gemini-3.5-flash` model behavior.
+- **Automated Validation**: Pushed full suite of constraint validations evaluating against the `gemini-2.5-flash` model behavior.
 
 ---
 

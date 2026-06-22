@@ -61,7 +61,7 @@ Package init — exports `root_agent` as the ADK entry point.
 Frozen Pydantic `AgentConfig` model loaded from environment variables via
 `python-dotenv`. Cached as a singleton with `@lru_cache`. Fields:
 - `gemini_api_key`, `google_genai_use_enterprise`
-- `orchestrator_model` (default: `gemini-3.5-flash`)
+- `orchestrator_model` (default: `gemini-2.5-flash`)
 - `app_env`, `log_level`
 - `pii_redaction_mode`, `pii_redaction_placeholder`
 - `eval_dataset_path`
@@ -148,7 +148,7 @@ Four test classes:
 Array of structured golden dataset tasks for evaluating the orchestration agent trajectory, specifically tracking PII leakage. Contains the `forbidden_tokens` schema for strict verification.
 
 #### [NEW] `tests/evaluation/test_golden_dataset.py`
-Evaluation engine checking `golden_dataset.json` by invoking the `Session` live with `gemini-3.1-pro`. Audits output tokens and expected trajectory (enforces `clean_pii`).
+Evaluation engine checking `golden_dataset.json` by invoking the `Session` live with `gemini-2.5-pro`. Audits output tokens and expected trajectory (enforces `clean_pii`).
 
 #### [NEW] `tests/evaluation/datasets/labels_valid.jsonl`
 4 cases: valid labels, category mismatch, missing labels, negative dimensions.
@@ -222,7 +222,7 @@ Deterministic, regex-driven PII cleaner. Architecture:
 - `if __name__ == "__main__"` CLI quick-test with realistic sample log
 
 #### [NEW] `src/skills/pii_redactor/data_simulator.py`
-Gemini 3.5 Flash synthetic log generator:
+Gemini 2.5 Flash synthetic log generator:
 - `AVDisengagementLogSimulator` class — configurable temperature/token budget
 - Prompt engineering: names all 3 PII types explicitly with formatting instructions
   (use different notation styles; embed naturally in messy prose; add typos/abbreviations)
@@ -248,13 +248,13 @@ with a feature-rich three-tab Gradio frontend GUI.
 - **Tab 1: Synthetic Data Generation Engine**
   - Features a large display text box showing generated raw log strings.
   - Action button: 'Generate Synthetic AV Log Data'.
-  - Connects to the simulator skill module (`AVDisengagementLogSimulator`) backed by `gemini-3.5-flash`.
+  - Connects to the simulator skill module (`AVDisengagementLogSimulator`) backed by `gemini-2.5-flash`.
 - **Tab 2: Secure Validation Audit Portal**
   - Input text field for pasting raw logs.
   - Action button: 'Run Safe Validation Audit'.
   - Executes the `enterprise_av_security_pii_cleaner` tool to mask driver fields before model processing.
   - Intermediate textbox showing the 'Purified Outbound Prompt Context'.
-  - Markdown window presenting the final audited corporate compliance report via `av_compliance_agent` (backed by `gemini-3.1-pro`).
+  - Markdown window presenting the final audited corporate compliance report via `av_compliance_agent` (backed by `gemini-2.5-pro`).
 - **Tab 3: Automated Performance Evaluation**
   - Action button: 'Execute Trajectory & PII Leak Audit Suite'.
   - Programmatically runs test cases against validation rules.

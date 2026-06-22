@@ -35,16 +35,15 @@ The Enterprise Dashboard is split into three main tabs, allowing you to seamless
 ### Tab 1: Synthetic Data Generation Engine
 1. **Purpose:** This tab allows you to procedurally generate messy, realistic disengagement logs to test the downstream system.
 2. **Action:** Click the **"Generate Log"** button.
-3. **Result:** The system will use Gemini 3.5 Flash to synthesize a highly complex scenario involving heavy traffic, sensor obstructions, and injected Personal Identifiable Information (PII) like Driver Names, Plates, and GPS Coordinates.
+3. **Result:** The system will use Gemini 2.5 Flash to synthesize a highly complex scenario involving heavy traffic, sensor obstructions, and injected Personal Identifiable Information (PII) like Driver Names, Plates, and GPS Coordinates.
 
-### Tab 2: Secure Validation Audit Portal
-1. **Purpose:** This is the core operational area where raw logs are scrubbed and formally analyzed against corporate guardrails.
-2. **Action:**
-   - Paste a raw log (or the synthetic one generated from Tab 1) into the **"Raw Input Field Notes"** text box.
-   - Click the **"Process and Analyze Log"** button.
-3. **Result:**
-   - **Stage 1 (Client-Side Scrubbing):** The raw log will first be processed locally. You will see the scrubbed text in the "Purified Outbound Prompt Context" box, verifying that all PII was intercepted and replaced with safe tags (e.g., `[DRIVER_REDACTED]`).
-   - **Stage 2 (Compliance Analysis):** The scrubbed text is sent securely to the Compliance Agent (Gemini 3.1 Pro). The agent will query the RAG assets, fetch Geolocation/Weather data, validate any telemetry gaps, and return a structured Kaggle-ready Compliance JSONL format detailing the incident severity. An interactive map frame will also render the incident location.
+### 2. Validate a Log (Secure Audit)
+
+1. **Input Data:** Navigate to the **"Secure Validation"** tab. Select one of the logs you just generated from the dropdown menu (or paste a raw log into the text box).
+2. **Action:** Click **"Validate ADK Compliance"**.
+3. **Observation:**
+   - **Stage 1 (PII Cleansing):** Notice the scrolling audit log on the right. The enterprise Regex engine detects and redacts the driver name, license plate, and coordinates *before* sending anything to the cloud.
+   - **Stage 2 (Compliance Analysis):** The scrubbed text is sent securely to the Compliance Agent (Gemini 2.5 Pro). The agent will query the RAG assets, fetch Geolocation/Weather data, validate any telemetry gaps, and return a structured Kaggle-ready Compliance JSONL format detailing the incident severity. An interactive map frame will also render the incident location.
 
 ### Tab 3: Automated Performance Evaluation
 1. **Purpose:** This tab acts as an on-demand audit runner to execute integration checks.
