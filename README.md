@@ -1,7 +1,8 @@
 # Autonomous Vehicles Validation Agent
 
-![Cover Image](docs/images/project-cover-image.png)
 Author: Chong Kiat Lim (associated by Google Antigravity)
+
+![Cover Image](docs/images/project-cover-image.png)
 
 > **Production-grade ADK 2.0 agent** for Kaggle's Autonomous Vehicles Validation competition.
 
