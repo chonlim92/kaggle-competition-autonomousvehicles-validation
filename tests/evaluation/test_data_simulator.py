@@ -4,11 +4,11 @@ from src.skills.pii_redactor.scripts.data_simulator import AVDisengagementLogSim
 
 @patch("src.skills.pii_redactor.scripts.data_simulator.genai")
 def test_data_simulator(mock_genai):
-    mock_model = MagicMock()
-    mock_genai.GenerativeModel.return_value = mock_model
+    mock_client = MagicMock()
+    mock_genai.Client.return_value = mock_client
     mock_response = MagicMock()
     mock_response.text = "Simulated log generated."
-    mock_model.generate_content.return_value = mock_response
+    mock_client.models.generate_content.return_value = mock_response
 
     with patch.dict("os.environ", {"GEMINI_API_KEY": "fake_key"}):
         simulator = AVDisengagementLogSimulator()

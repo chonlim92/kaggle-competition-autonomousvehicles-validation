@@ -31,7 +31,7 @@ class AgentConfig(BaseModel):
 
     # ── Model Selection ───────────────────────────────────────────────────────
     orchestrator_model: str = Field(
-        default="gemini-2.0-flash",
+        default="gemini-2.5-flash",
         description="Gemini model ID used by the orchestrator agent",
     )
 
@@ -67,7 +67,7 @@ def get_config() -> AgentConfig:
     return AgentConfig(
         gemini_api_key=os.getenv("GEMINI_API_KEY", "dummy_key_for_testing"),
         google_genai_use_enterprise=os.getenv("GOOGLE_GENAI_USE_ENTERPRISE", "FALSE"),
-        orchestrator_model=os.getenv("ORCHESTRATOR_MODEL", "gemini-2.0-flash"),
+        orchestrator_model=os.getenv("ORCHESTRATOR_MODEL", "gemini-2.5-flash"),
         app_env=os.getenv("APP_ENV", "development"),  # type: ignore[arg-type]
         log_level=os.getenv("LOG_LEVEL", "INFO"),  # type: ignore[arg-type]
         eval_dataset_path=os.getenv("EVAL_DATASET_PATH", "tests/evaluation/datasets/"),

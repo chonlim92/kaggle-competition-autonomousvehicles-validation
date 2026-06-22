@@ -38,7 +38,7 @@
   - `ORCHESTRATOR_SYSTEM_PROMPT` — AV expert persona, JSON output format
   - `PII_REDACTOR_TASK_PROMPT` — sub-task prompt
 - [x] Create `src/agent/agent.py`
-  - `root_agent` as ADK `LlmAgent` with `gemini-2.0-flash`
+  - `root_agent` as ADK `LlmAgent` with `gemini-3.5-flash`
   - Registered tools: `redact_pii`, `validate_telemetry`, `validate_labels`, `generate_report`
 
 ---
@@ -146,7 +146,7 @@
   - Typed placeholders: `[DRIVER_REDACTED]`, `[PLATE_REDACTED]`, `[GPS_REDACTED]`
   - CLI quick-test block (`if __name__ == "__main__"`)
 - [x] Create `src/skills/pii_redactor/data_simulator.py`
-  - `AVDisengagementLogSimulator` class — uses `gemini-1.5-flash`
+  - `AVDisengagementLogSimulator` class — uses `gemini-3.5-flash`
   - Prompt engineering: instructs model to embed all 3 PII types naturally in messy prose
   - 12 randomised scenario seeds (pedestrian jaywalking, wet road, construction zone, etc.)
   - 20-name driver name pool (diverse, realistic)
@@ -164,8 +164,8 @@
 ### Phase 11 — Enterprise Dashboard UI (`src/agent/app.py`) ✅
 - [x] Add `gradio` to `pyproject.toml` dependencies
 - [x] Build Gradio 3-tab layout with dark enterprise theme
-- [x] Implement Tab 1 (Synthetic Data Generation Engine) backed by `AVDisengagementLogSimulator` (gemini-1.5-flash)
-- [x] Implement Tab 2 (Secure Validation Audit Portal) linking regex PII cleaner and `av_compliance_agent` (gemini-1.5-pro)
+- [x] Implement Tab 1 (Synthetic Data Generation Engine) backed by `AVDisengagementLogSimulator` (gemini-3.5-flash)
+- [x] Implement Tab 2 (Secure Validation Audit Portal) linking regex PII cleaner and `av_compliance_agent` (gemini-3.1-pro)
 - [x] Implement Tab 3 (Automated Performance Evaluation) with JSONL recall, smoke tests, and boundary tests
 
 ---
@@ -194,7 +194,7 @@
 - [x] Create `test_golden_dataset.py` for comprehensive Golden Dataset evaluation
 - [x] Implement PII Enforcement Hooks (`PIIEnforcementHook`) to strictly intercept PII before LLM calls
 - [x] Create integration tests (`test_hooks.py`) enforcing GR-LEAK and live LLM constraints
-- [x] Run full constraint evaluation suite against `gemini-1.5-flash` model
+- [x] Run full constraint evaluation suite against `gemini-3.5-flash` model
 
 
 ## Phase 17 — Integrate Enhanced Map & Weather APIs ✅

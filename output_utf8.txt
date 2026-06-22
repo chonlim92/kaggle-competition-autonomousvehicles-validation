@@ -1,0 +1,40 @@
+﻿python : C:\Users\chonlim\workspace\git_repos_building\agentic_ai\google\courses\IntensiveVibeCodingCourseWithGoogle\ka
+ggle-competition-autonomousvehicles-validation\src\agent\app.py:110: FutureWarning:
+In Zeile:1 Zeichen:1
++ python src/agent/app.py --share > output.log 2>&1
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (C:\Users\chonli...FutureWarning: :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+2026-06-21T13:23:58.246706Z [info     ] AV Validation Orchestrator initialised env=development model=gemini-2.0-flash
+2026-06-21T13:24:47.824334Z [info     ] Gemini API configured          key_prefix=AIzaSyDB...
+2026-06-21T13:24:47.825358Z [info     ] AVDisengagementLogSimulator initialised model=gemini-2.0-flash
+2026-06-21T13:24:47.825358Z [info     ] AVDisengagementLogSimulator initialised
+2026-06-21T13:24:47.826027Z [info     ] ADK compliance agent initialised agent=av_compliance_agent model=gemini-1.5-pro-latest
+C:\Users\chonlim\workspace\git_repos_building\agentic_ai\google\courses\IntensiveVibeCodingCourseWithGoogle\kaggle-comp
+etition-autonomousvehicles-validation\src\agent\app.py:1039: UserWarning: The parameters have been moved from the
+Blocks constructor to the launch() method in Gradio 6.0: theme, css. Please pass these parameters to launch() instead.
+  with gr.Blocks(  # pragma: no cover
+2026-06-21T13:24:48.308156Z [debug    ] New Gradio session             session_id=390640eb-906e-4402-9e66-57bbaa0a122c
+2026-06-21T13:24:48.838869Z [info     ] Starting AV Validation Dashboard adk_available=True compliance_model=gemini-1.5-pro-latest host=127.0.0.1 port=7860 share=True simulator_available=True
+Traceback (most recent call last):
+  File "C:\Users\chonlim\workspace\git_repos_building\agentic_ai\google\courses\IntensiveVibeCodingCourseWithGoogle\kag
+gle-competition-autonomousvehicles-validation\src\agent\app.py", line 1289, in <module>
+    demo.launch(
+  File "C:\Users\chonlim\AppData\Local\Programs\Python\Python311\Lib\site-packages\gradio\blocks.py", line 2952, in
+launch
+    ) = http_server.start_server(
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\chonlim\AppData\Local\Programs\Python\Python311\Lib\site-packages\gradio\http_server.py", line 182,
+in start_server
+    raise OSError(
+OSError: Cannot find empty port in range: 7860-7860. You can specify a different port by setting the
+GRADIO_SERVER_PORT environment variable or passing the `server_port` parameter to `launch()`.

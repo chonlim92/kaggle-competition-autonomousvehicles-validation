@@ -1,0 +1,21 @@
+C:\Users\chonlim\workspace\git_repos_building\agentic_ai\google\courses\IntensiveVibeCodingCourseWithGoogle\kaggle-competition-autonomousvehicles-validation\src\agent\app.py:110: FutureWarning:
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+2026-06-21T13:25:41.556592Z [info     ] AV Validation Orchestrator initialised env=development model=gemini-2.0-flash
+2026-06-21T13:27:31.561838Z [info     ] Gemini API configured          key_prefix=AIzaSyDB...
+2026-06-21T13:27:31.563838Z [info     ] AVDisengagementLogSimulator initialised model=gemini-2.0-flash
+2026-06-21T13:27:31.564838Z [info     ] AVDisengagementLogSimulator initialised
+2026-06-21T13:27:31.565837Z [info     ] ADK compliance agent initialised agent=av_compliance_agent model=gemini-1.5-pro-latest
+C:\Users\chonlim\workspace\git_repos_building\agentic_ai\google\courses\IntensiveVibeCodingCourseWithGoogle\kaggle-competition-autonomousvehicles-validation\src\agent\app.py:1039: UserWarning: The parameters have been moved from the Blocks constructor to the launch() method in Gradio 6.0: theme, css. Please pass these parameters to launch() instead.
+  with gr.Blocks(  # pragma: no cover
+2026-06-21T13:27:32.714831Z [debug    ] New Gradio session             session_id=ae989648-fdc2-497e-a328-ca2a6e4f2925
+2026-06-21T13:27:33.783996Z [info     ] Starting AV Validation Dashboard adk_available=True compliance_model=gemini-1.5-pro-latest host=127.0.0.1 port=7865 share=True simulator_available=True
+* Running on local URL:  http://127.0.0.1:7865
+
+Could not create share link. Please check your internet connection or our status page: https://status.gradio.app.

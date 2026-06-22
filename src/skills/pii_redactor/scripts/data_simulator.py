@@ -3,7 +3,7 @@ src/skills/pii_redactor/data_simulator.py
 
 AV Disengagement Log Simulator
 ================================
-Uses the Gemini API (gemini-2.0-flash) to procedurally generate realistic,
+Uses the Gemini API (gemini-2.5-flash) to procedurally generate realistic,
 messy vehicle disengagement text logs on demand.
 
 Each generated log intentionally contains:
@@ -30,6 +30,7 @@ import argparse
 import json
 import os
 import random
+import time
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -45,18 +46,19 @@ logger = structlog.get_logger(__name__)
 
 # ── Gemini import ─────────────────────────────────────────────────────────────
 try:
-    import google.generativeai as genai
+    from google import genai
+    from google.genai import types
     _GENAI_AVAILABLE = True
 except ImportError:
     _GENAI_AVAILABLE = False
     logger.warning(
-        "google-generativeai not installed. "
-        "Install with: pip install google-generativeai"
+        "google-genai not installed. "
+        "Install with: pip install google-genai"
     )
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 
-MODEL_ID = "gemini-2.0-flash"
+MODEL_ID = os.getenv("SYNTHETIC_DATA_MODEL", "gemini-2.5-flash")
 
 # Disengagement scenario seeds for variety
 _SCENARIO_SEEDS = [
@@ -185,7 +187,7 @@ Generate the report now:"""
 
 class AVDisengagementLogSimulator:
     """
-    Procedurally generates messy AV disengagement logs via Gemini 1.5 Flash.
+    Procedurally generates messy AV disengagement logs via Gemini 3.5 Flash.
 
     Each call to `generate()` produces a unique log with randomised PII
     (driver name, plates, GPS coordinates) and a randomised scenario.
@@ -203,8 +205,8 @@ class AVDisengagementLogSimulator:
 
         if not _GENAI_AVAILABLE:
             raise ImportError(
-                "google-generativeai is required. "
-                "Install with: pip install google-generativeai"
+                "google-genai is required. "
+                "Install with: pip install google-genai"
             )
 
         resolved_key = api_key or os.getenv("GEMINI_API_KEY")
@@ -213,15 +215,7 @@ class AVDisengagementLogSimulator:
                 "GEMINI_API_KEY not found. Set it in .env or pass api_key= explicitly."
             )
 
-        genai.configure(api_key=resolved_key)  # type: ignore[attr-defined]
-        self._model = genai.GenerativeModel(  # type: ignore[attr-defined]
-            model_name=MODEL_ID,
-            generation_config={
-                "temperature": self.temperature,
-                "max_output_tokens": self.max_output_tokens,
-                "candidate_count": 1,
-            },
-        )
+        self._client = genai.Client(api_key=resolved_key)  # type: ignore[attr-defined]
         logger.info("AVDisengagementLogSimulator initialised", model=MODEL_ID)
 
     def _random_gps(self, region: dict) -> tuple[float, float]:
@@ -289,7 +283,13 @@ class AVDisengagementLogSimulator:
             gps=f"{lat1},{lon1}",
         )
 
-        response = self._model.generate_content(prompt)  # type: ignore[union-attr]
+        response = self._client.models.generate_content(  # type: ignore[union-attr]
+            model=MODEL_ID,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                temperature=self.temperature,
+            )
+        )
         log_text: str = response.text.strip()
 
         metadata = {
@@ -338,6 +338,9 @@ class AVDisengagementLogSimulator:
             result = self.generate(seed=log_seed)
             results.append(result)
             logger.info(f"Generated log {i + 1}/{count}")
+            import time
+            if i < count - 1:
+                time.sleep(16)
         return results
 
 

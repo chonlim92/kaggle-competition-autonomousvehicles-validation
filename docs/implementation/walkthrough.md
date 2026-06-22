@@ -6,7 +6,7 @@
 
 ## Phase 1 — Repository Initialization
 
-**Date**: 2026-06-20  
+**Date**: 2026-06-20
 **Branch**: `main`
 
 The remote GitHub repository `kaggle-competition-autonomousvehicles-validation` was empty.
@@ -177,8 +177,8 @@ processing — a precision-focused eval that avoids requiring exact output match
 
 ## Phase 7 — Initial Git Commit & Push
 
-**Commit**: `757b73b`  
-**Files**: 22 files, 1,377 insertions  
+**Commit**: `757b73b`
+**Files**: 22 files, 1,377 insertions
 **Remote**: `https://github.com/chonlim92/kaggle-competition-autonomousvehicles-validation`
 
 The commit message follows the Conventional Commits specification with a detailed
@@ -194,7 +194,7 @@ Push result:
 
 ## Phase 8 — Docs Folder
 
-**Date**: 2026-06-20  
+**Date**: 2026-06-20
 **Files created**: `docs/implementation/implementation_plan.md`,
 `docs/implementation/tasks.md`, `docs/implementation/walkthrough.md` (this file)
 
@@ -326,7 +326,7 @@ kaggle-competition-autonomousvehicles-validation/
 
 ## Phase 10 — Enterprise PII Cleaner & Log Simulator
 
-**Date**: 2026-06-20  
+**Date**: 2026-06-20
 **Files created**: `src/skills/pii_redactor/skill.md`, `src/skills/pii_redactor/enterprise_av_security_pii_cleaner.py`, `src/skills/pii_redactor/data_simulator.py`
 
 ### skill.md — Design decisions
@@ -392,22 +392,22 @@ generate → clean → evaluate → improve regex → repeat.
 
 ## Phase 11 — Enterprise Dashboard UI
 
-**Date**: 2026-06-20  
+**Date**: 2026-06-20
 **Files created**: `src/agent/app.py`
 **Dependencies added**: `gradio>=4.31.0`
 
 ### app.py — Design decisions
 
 **Three-Tab Functional Separation:**
-- **Tab 1: Synthetic Data Generation Engine:** Powered by `AVDisengagementLogSimulator` (using `gemini-1.5-flash`), it generates realistic, messy logs with injected PII for testing. It outputs ground truth metadata alongside the log.
+- **Tab 1: Synthetic Data Generation Engine:** Powered by `AVDisengagementLogSimulator` (using `gemini-3.5-flash`), it generates realistic, messy logs with injected PII for testing. It outputs ground truth metadata alongside the log.
 - **Tab 2: Secure Validation Audit Portal:** The core operational dashboard. It implements a strict **two-stage defence-in-depth pipeline**:
   - *Stage 1*: Deterministic PII sanitization via `enterprise_av_security_pii_cleaner`. Replaces PII with typed placeholders (`[DRIVER_REDACTED]`, etc.).
-  - *Stage 2*: The purified context is then sent to the `av_compliance_agent` (powered by `gemini-1.5-pro`) to generate a formal corporate compliance report. The LLM *never* sees the raw user input.
+  - *Stage 2*: The purified context is then sent to the `av_compliance_agent` (powered by `gemini-3.1-pro`) to generate a formal corporate compliance report. The LLM *never* sees the raw user input.
 - **Tab 3: Automated Performance Evaluation:** A built-in test suite runner executing JSONL recall tests, smoke tests, and boundary tests to ensure guardrails are enforced and PII is successfully redacted.
 
 **Model Selection & Agent Config:**
-- The compliance agent intentionally uses `gemini-1.5-pro` (defined in `COMPLIANCE_MODEL`) due to the complex reasoning required for formal incident report formatting and regulatory rule cross-referencing.
-- `gemini-1.5-flash` is relegated to data generation (Tab 1) for speed and cost efficiency.
+- The compliance agent intentionally uses `gemini-3.1-pro` (defined in `COMPLIANCE_MODEL`) due to the complex reasoning required for formal incident report formatting and regulatory rule cross-referencing.
+- `gemini-3.5-flash` is relegated to data generation (Tab 1) for speed and cost efficiency.
 
 **Security Boundaries & UI Feedback:**
 - Tab 2 includes a specific "Purified Outbound Prompt Context" textbox. This visually reassures the operator that PII has been stripped *before* generation.
@@ -426,19 +426,19 @@ src/
   │    └── app.py                            ✅ NEW — Gradio Enterprise Dashboard
   └── skills/
        └── pii_redactor/
-            ├── __init__.py                  
-            ├── skill.md                     
-            ├── enterprise_av_security_pii_cleaner.py 
-            ├── data_simulator.py            
-            ├── redactor.py                  
-            └── skill.py                     
+            ├── __init__.py
+            ├── skill.md
+            ├── enterprise_av_security_pii_cleaner.py
+            ├── data_simulator.py
+            ├── redactor.py
+            └── skill.py
 
 ---
 
 ## Phase 12 — Tool Implementation
 
-**Date**: 2026-06-20  
-**Files created**: 
+**Date**: 2026-06-20
+**Files created**:
 - `src/skills/validation/telemetry_validator.py`
 - `src/skills/validation/label_validator.py`
 - `src/skills/validation/report_generator.py`
@@ -447,18 +447,18 @@ src/
 ### Validation Skills — Design decisions
 
 **Dataset-Driven Tool Development:**
-Instead of simple generic validation scripts, the telemetry and label validators were designed deterministically against the structured datasets `telemetry_valid.jsonl` and `labels_valid.jsonl`. 
+Instead of simple generic validation scripts, the telemetry and label validators were designed deterministically against the structured datasets `telemetry_valid.jsonl` and `labels_valid.jsonl`.
 
-- **Telemetry Validator (`telemetry_validator.py`):** 
-  - Implements the strict thresholds outlined in `assets/rules.txt` (AV-REG-102). 
+- **Telemetry Validator (`telemetry_validator.py`):**
+  - Implements the strict thresholds outlined in `assets/rules.txt` (AV-REG-102).
   - Catches `LOW_POINT_DENSITY` (LiDAR points < 10,000), `SENSOR_DROPOUT` (fps=0 or timestamp gaps > 500ms), and `INCONSISTENT_VELOCITY`.
-- **Label Validator (`label_validator.py`):** 
+- **Label Validator (`label_validator.py`):**
   - Inspects annotation boundaries for anomalies, flagging `MISSING_LABEL`, `NEGATIVE_DIMENSION`, and `CATEGORY_MISMATCH` to catch upstream perception engine failures.
-- **Report Generator (`report_generator.py`):** 
+- **Report Generator (`report_generator.py`):**
   - Aggregates findings and summarises the overall pipeline severity distribution (CRITICAL vs HIGH).
 
 **Test Coverage:**
-- The tools have full unit test coverage using `pytest`. The parameterized `test_validation_tools.py` dynamically loads the ground truth from the JSONL artifacts to ensure accuracy. 
+- The tools have full unit test coverage using `pytest`. The parameterized `test_validation_tools.py` dynamically loads the ground truth from the JSONL artifacts to ensure accuracy.
 
 ---
 
@@ -475,10 +475,10 @@ src/
        ├── knowledge_retrieval.py            ✅ NEW
        ├── pii_redactor/
        └── validation/
-            ├── __init__.py                  
-            ├── telemetry_validator.py       
-            ├── label_validator.py           
-            └── report_generator.py          
+            ├── __init__.py
+            ├── telemetry_validator.py
+            ├── label_validator.py
+            └── report_generator.py
 
 ---
 
@@ -502,7 +502,7 @@ src/
 ### Phase 16 — Live LLM Evaluation Constraint Testing
 - **Golden Dataset**: Engineered `test_golden_dataset.py` with 38 total integration and constraint tests to ensure PII and safety logic covers edge cases.
 - **Enforcement Hooks**: Authored `PIIEnforcementHook` directly integrating with the ADK workflow to intercept raw incoming messages and redact outgoing model completions.
-- **Automated Validation**: Pushed full suite of constraint validations evaluating against the `gemini-1.5-flash` model behavior.
+- **Automated Validation**: Pushed full suite of constraint validations evaluating against the `gemini-3.5-flash` model behavior.
 
 ---
 

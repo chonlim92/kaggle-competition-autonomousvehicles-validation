@@ -42,6 +42,8 @@ logger = structlog.get_logger(__name__)
 PLACEHOLDER_DRIVER: str = "[DRIVER_REDACTED]"
 PLACEHOLDER_PLATE: str = "[PLATE_REDACTED]"
 PLACEHOLDER_GPS: str = "[GPS_REDACTED]"
+PLACEHOLDER_EMAIL: str = "[EMAIL_REDACTED]"
+PLACEHOLDER_PHONE: str = "[PHONE_REDACTED]"
 
 
 # ==============================================================================
@@ -105,7 +107,7 @@ _PLATE_FORMATS = (
 )
 
 _PLATE_KEYWORD = (
-    r"(?:plate|license\s+plate|licence\s+plate|lic(?:ence|ense)?|"
+    r"(?<![A-Za-z0-9\-])(?:plate|license\s+plate|licence\s+plate|lic(?:ence|ense)?|"
     r"reg(?:istration)?|unit|fleet\s+id|veh(?:icle)?(?:\s+id)?)"
 )
 
@@ -118,10 +120,10 @@ _PLATE_ANCHORED_PATTERN = re.compile(
 )
 
 # Standalone plate: any token that looks like a plate (less aggressive)
-# Bounded to avoid false positives in hex/sensor IDs
+# Bounded to avoid false positives in hex/sensor IDs or AV-REG / BUG-CAM IDs
 _PLATE_STANDALONE_PATTERN = re.compile(
-    r"\b([A-Z]{1,3}[\-\s]\d{2,4}[\-\s]?[A-Z]{0,3}|"
-    r"\d{1,4}[A-Z]{2,4}\d{0,4})\b",
+    r"(?<![A-Za-z0-9\-])([A-Z]{1,3}[\-\s]\d{2,4}[\-\s]?[A-Z]{0,3}|"
+    r"\d{1,4}[A-Z]{2,4}\d{0,4})(?![A-Za-z0-9\-])",
     re.IGNORECASE,
 )
 
@@ -183,6 +185,17 @@ _GPS_BARE_PATTERN = re.compile(
 )
 
 
+# ── 4. Email and Phone Patterns ─────────────────────────────────────────────
+_EMAIL_PATTERN = re.compile(
+    r"\b[A-Za-z0-9_.+\-]+@[A-Za-z0-9\-]+\.[A-Za-z0-9\-.]+\b",
+    re.IGNORECASE,
+)
+
+_PHONE_PATTERN = re.compile(
+    r"\b(?:\+?\d{1,3}[\s\-.]?)?\(?\d{3}\)?[\s\-.]?\d{3}[\s\-.]?\d{4}\b",
+    re.IGNORECASE,
+)
+
 # ==============================================================================
 # Result Dataclass
 # ==============================================================================
@@ -196,11 +209,13 @@ class CleanerResult:
     driver_name_count: int = 0
     licence_plate_count: int = 0
     gps_coordinate_count: int = 0
+    email_count: int = 0
+    phone_count: int = 0
     redaction_details: List[dict] = field(default_factory=list)
 
     @property
     def total_redactions(self) -> int:
-        return self.driver_name_count + self.licence_plate_count + self.gps_coordinate_count
+        return self.driver_name_count + self.licence_plate_count + self.gps_coordinate_count + self.email_count + self.phone_count
 
     @property
     def pii_found(self) -> bool:
@@ -227,6 +242,8 @@ class EnterpriseAVSecurityPIICleaner:
         self._driver_name_count = 0
         self._plate_count = 0
         self._gps_count = 0
+        self._email_count = 0
+        self._phone_count = 0
         self._details: List[dict] = []
 
     # ── Pass 1: GPS Coordinates ───────────────────────────────────────────────
@@ -341,6 +358,30 @@ class EnterpriseAVSecurityPIICleaner:
         text = _DRIVER_PATTERN.sub(_name_replace, text)
         return text
 
+    # ── Pass 4: Emails and Phones ─────────────────────────────────────────────
+
+    def _redact_emails_phones(self, text: str) -> str:
+        def _email_replace(m: re.Match) -> str:
+            self._email_count += 1
+            self._details.append({
+                "type": "EMAIL", "pattern": "email_format",
+                "match": m.group(0)[:60], "position": m.start(),
+            })
+            return PLACEHOLDER_EMAIL
+
+        text = _EMAIL_PATTERN.sub(_email_replace, text)
+
+        def _phone_replace(m: re.Match) -> str:
+            self._phone_count += 1
+            self._details.append({
+                "type": "PHONE", "pattern": "phone_format",
+                "match": m.group(0)[:60], "position": m.start(),
+            })
+            return PLACEHOLDER_PHONE
+
+        text = _PHONE_PATTERN.sub(_phone_replace, text)
+        return text
+
     # ── Public API ────────────────────────────────────────────────────────────
 
     def clean(self, raw_log_text: str) -> CleanerResult:
@@ -378,12 +419,17 @@ class EnterpriseAVSecurityPIICleaner:
         # Pass 3: Driver Names
         text = self._redact_driver_names(text)
 
+        # Pass 4: Emails and Phones
+        text = self._redact_emails_phones(text)
+
         result = CleanerResult(
             original_text=raw_log_text,
             redacted_text=text,
             driver_name_count=self._driver_name_count,
             licence_plate_count=self._plate_count,
             gps_coordinate_count=self._gps_count,
+            email_count=self._email_count,
+            phone_count=self._phone_count,
             redaction_details=list(self._details),
         )
 
@@ -443,6 +489,8 @@ def clean_pii(raw_log_text: str) -> dict:
             "driver_names": result.driver_name_count,
             "licence_plates": result.licence_plate_count,
             "gps_coordinates": result.gps_coordinate_count,
+            "emails": result.email_count,
+            "phones": result.phone_count,
             "total": result.total_redactions,
         },
         "original_char_count": len(result.original_text),
