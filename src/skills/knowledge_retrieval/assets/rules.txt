@@ -1,0 +1,199 @@
+================================================================================
+AUTONOMOUS VEHICLE FLEET — OPERATIONAL SAFETY RULES
+Document Type : Regulatory Safety Protocol
+Asset ID      : assets/rules.txt
+Authority     : AV Safety Compliance Office
+Version       : 2.1.0
+Effective Date: 2026-01-01
+Review Cycle  : Quarterly
+Classification: INTERNAL — OPERATIONAL USE ONLY
+================================================================================
+
+PREAMBLE
+--------
+The following rules constitute the mandatory operational safety envelope for all
+autonomous vehicle (AV) units deployed under this fleet program. All onboard
+decision systems, cloud orchestration agents, and validation pipelines MUST
+evaluate candidate actions against this ruleset before execution or approval.
+Rules are immutable at runtime. Any waiver requires a signed Change Request and
+must be reflected in a new versioned revision of this document.
+
+Any validation agent processing AV telemetry or annotation data MUST cross-reference
+findings against the rules defined herein. Non-compliance with a CRITICAL-severity
+rule MUST halt processing and generate an immediate incident report.
+
+================================================================================
+RULE_ID    : AV-REG-101
+Category   : Intersection Safety — Velocity Thresholds
+Severity   : CRITICAL
+Status     : ACTIVE
+Applies To : All AV units operating on public road networks
+================================================================================
+
+TITLE: Intersection Approach and Transit Velocity Thresholds
+
+PURPOSE:
+  To define the maximum permissible vehicle speeds at all intersection types to
+  minimise collision risk with cross-traffic, pedestrians, cyclists, and other
+  vulnerable road users (VRUs). Speed thresholds are calibrated to allow safe
+  stopping within the sensor detection envelope under nominal operating conditions.
+
+DEFINITIONS:
+  - Intersection Zone   : The area bounded by the stop lines of all approaches,
+                          extended 15 m beyond the furthest exit lane edge.
+  - Approach Zone       : The 50 m corridor immediately preceding the stop line
+                          on the ego vehicle's travel path.
+  - Nominal Conditions  : Dry road surface, visibility ≥ 100 m, no active alerts.
+  - Adverse Conditions  : Wet/icy road surface, visibility < 100 m, or any active
+                          sensor integrity alert (see AV-REG-102).
+
+VELOCITY THRESHOLDS:
+
+  Table 1 — Uncontrolled Intersections (no signal, no stop sign)
+  ┌────────────────────────────┬────────────────────┬─────────────────────┐
+  │ Zone                       │ Nominal (km/h)     │ Adverse (km/h)      │
+  ├────────────────────────────┼────────────────────┼─────────────────────┤
+  │ Approach Zone (50 m)       │ ≤ 30               │ ≤ 20                │
+  │ Intersection Zone — entry  │ ≤ 20               │ ≤ 10                │
+  │ Intersection Zone — transit│ ≤ 25               │ ≤ 15                │
+  │ Intersection Zone — exit   │ ≤ 30               │ ≤ 20                │
+  └────────────────────────────┴────────────────────┴─────────────────────┘
+
+  Table 2 — Controlled Intersections (traffic signal or stop/yield sign)
+  ┌────────────────────────────┬────────────────────┬─────────────────────┐
+  │ Zone                       │ Nominal (km/h)     │ Adverse (km/h)      │
+  ├────────────────────────────┼────────────────────┼─────────────────────┤
+  │ Approach Zone (50 m)       │ ≤ 40               │ ≤ 25                │
+  │ Intersection Zone — entry  │ ≤ 25               │ ≤ 12                │
+  │ Intersection Zone — transit│ ≤ 30               │ ≤ 18                │
+  │ Intersection Zone — exit   │ ≤ 40               │ ≤ 25                │
+  └────────────────────────────┴────────────────────┴─────────────────────┘
+
+  Table 3 — School Zones and Pedestrian Priority Zones
+  ┌────────────────────────────┬────────────────────┬─────────────────────┐
+  │ Zone                       │ Nominal (km/h)     │ Adverse (km/h)      │
+  ├────────────────────────────┼────────────────────┼─────────────────────┤
+  │ All zones (any approach)   │ ≤ 15               │ ≤ 10                │
+  └────────────────────────────┴────────────────────┴─────────────────────┘
+
+BREACH CONDITIONS:
+  A velocity threshold breach is declared when the ego vehicle's measured speed
+  (CAN Bus or GNSS-derived) exceeds the applicable limit by ≥ 2 km/h for ≥ 500 ms.
+
+COMPLIANCE ACTIONS:
+  1. WARN  : Speed within 2–5 km/h above limit → log WARNING event, alert fleet ops.
+  2. ALERT : Speed > 5 km/h above limit → log CRITICAL event, command speed reduction.
+  3. OVERRIDE : Speed > 10 km/h above limit for > 2 s → command emergency deceleration,
+               flag for human review, suspend autonomous mode until cleared.
+
+VALIDATION AGENT RULE:
+  When processing telemetry records, any frame where computed ego speed exceeds the
+  applicable AV-REG-101 threshold for the detected zone type MUST be flagged with:
+    - Issue Code  : AV-REG-101-BREACH
+    - Severity    : CRITICAL
+    - Required Fields: record_id, frame_id, zone_type, measured_speed_kmh,
+                       threshold_kmh, condition_type, duration_ms
+
+EXCEPTIONS:
+  - Emergency response clearance: requires active EMERGENCY_MODE flag on CAN Bus.
+  - Test track operations: requires FLEET_MODE=TEST in vehicle metadata.
+  In both cases, events must still be logged but are excluded from compliance counts.
+
+================================================================================
+RULE_ID    : AV-REG-102
+Category   : Sensor Integrity — Obstruction and Degradation Rules
+Severity   : CRITICAL
+Status     : ACTIVE
+Applies To : All AV units; all sensor modalities (LiDAR, Camera, RADAR, IMU, GNSS)
+================================================================================
+
+TITLE: Sensor Obstruction Integrity Rules
+
+PURPOSE:
+  To define mandatory response protocols when one or more primary sensors on an AV
+  unit report obstruction, degradation, or failure. Sensor integrity is the
+  foundational safety requirement for autonomous operation — no motion decision may
+  rely on data from a sensor operating outside its nominal integrity envelope.
+
+DEFINITIONS:
+  - Primary Sensor     : LiDAR (all units), forward camera array (all units).
+  - Secondary Sensor   : Surround cameras, RADAR units, IMU, GNSS, CAN Bus.
+  - Obstruction Event  : Any condition reducing sensor effective range or field-of-view
+                         by ≥ 20% relative to the calibrated baseline.
+  - Degradation Event  : Any condition reducing data quality (SNR, point density,
+                         frame rate) below the Minimum Operational Threshold (MOT).
+  - MOT                : Minimum Operational Threshold (per sensor, see Table 4).
+  - Sensor Fault Window: A rolling 10-second window used for fault accumulation logic.
+
+MINIMUM OPERATIONAL THRESHOLDS (MOT):
+
+  Table 4 — Per-Sensor MOT Values
+  ┌──────────────────────┬────────────────────────────────────────────────────────┐
+  │ Sensor               │ Minimum Operational Threshold                          │
+  ├──────────────────────┼────────────────────────────────────────────────────────┤
+  │ LiDAR                │ ≥ 10,000 points/sweep; ≥ 8 Hz sweep rate              │
+  │ Forward Camera       │ ≥ 8 FPS; brightness 20–230 (0–255 scale); blur ≤ 0.3  │
+  │ Surround Camera      │ ≥ 5 FPS; brightness 15–235; blur ≤ 0.4                │
+  │ RADAR                │ ≥ 4 valid target returns/sweep; max range ≥ 50 m      │
+  │ IMU                  │ Gyro drift ≤ 0.5 °/s; accel noise ≤ 0.05 m/s²        │
+  │ GNSS                 │ Horizontal accuracy ≤ 2.0 m CEP; ≥ 4 satellites locked│
+  └──────────────────────┴────────────────────────────────────────────────────────┘
+
+OBSTRUCTION CLASSIFICATION:
+
+  Level 1 — MINOR (20–40% FOV/range reduction):
+    Action: Log WARNING. Continue autonomous operation. Alert fleet ops.
+    Recheck interval: Every 5 seconds.
+
+  Level 2 — MODERATE (40–70% FOV/range reduction):
+    Action: Log ALERT. Reduce speed by 30% of current limit. Engage safe-follow mode.
+    Recheck interval: Every 2 seconds.
+    Auto-clear: If sensor recovers to < 20% reduction for ≥ 10 s.
+
+  Level 3 — SEVERE (> 70% FOV/range reduction, OR any primary sensor below MOT):
+    Action: Log CRITICAL. Command immediate speed reduction to ≤ 15 km/h.
+            Activate fallback navigation using secondary sensors only.
+            Notify fleet operations for remote takeover authorisation.
+    Recheck interval: Continuous (every frame).
+    Auto-clear: NOT permitted. Requires fleet operator explicit clearance.
+
+WET-ROAD CAMERA REFLECTION PROTOCOL:
+  Camera sensors are susceptible to specular reflection artefacts on wet road surfaces.
+  The following additional checks MUST be applied when road_surface=WET is detected:
+    a) Forward camera brightness variance per frame must not exceed ±40% of rolling mean.
+    b) Object detection confidence for all detected objects must meet ≥ 0.70 threshold.
+    c) If ≥ 3 consecutive frames fail either check (a) or (b), escalate to Level 2.
+    d) If ≥ 6 consecutive frames fail, escalate to Level 3 regardless of FOV metrics.
+  Affected units running beta software must apply a 1.5× confidence penalty multiplier
+  to all camera-derived detections until the patch is validated (see fleet history).
+
+MULTI-SENSOR FAULT ESCALATION:
+  If 2 or more sensors (of any class) enter Level 2 or Level 3 simultaneously:
+    → Escalate ALL affected sensors to Level 3.
+    → Command vehicle to execute Minimal Risk Condition (MRC) manoeuvre:
+       Pull over safely, engage hazard lights, await fleet operator instruction.
+
+VALIDATION AGENT RULE:
+  Telemetry records flagged for sensor issues must carry:
+    - Issue Code  : AV-REG-102-[LEVEL]-[SENSOR_ID]
+    - Severity    : Matches obstruction level (MINOR→LOW, MODERATE→HIGH, SEVERE→CRITICAL)
+    - Required Fields: record_id, frame_id, sensor_id, sensor_type, obstruction_pct,
+                       mot_metric, mot_value, mot_threshold, road_surface, duration_frames
+
+INTERACTION WITH AV-REG-101:
+  Whenever a Level 2 or Level 3 sensor obstruction event is active, the vehicle is
+  considered to be operating under ADVERSE CONDITIONS for the purposes of AV-REG-101.
+  All AV-REG-101 Adverse Condition velocity thresholds apply immediately and automatically.
+
+================================================================================
+DOCUMENT CONTROL
+================================================================================
+Version  Date        Author                    Change Summary
+-------  ----------  ------------------------  ---------------------------------
+2.0.0    2025-10-01  AV Safety Compliance      Initial public release
+2.1.0    2026-01-01  AV Safety Compliance      Added wet-road camera protocol;
+                                               added multi-sensor escalation rule;
+                                               updated MOT table for RADAR
+================================================================================
+END OF DOCUMENT — assets/rules.txt
+================================================================================

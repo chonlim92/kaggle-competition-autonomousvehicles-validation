@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-base_dir = Path(__file__).parent.parent.parent
+base_dir = Path(__file__).resolve().parent.parent.parent.parent
 ASSETS_DIR = base_dir / "src" / "skills" / "validation" / "assets"
 
 def retrieve_knowledge(document_name: str) -> str:

@@ -1,0 +1,160 @@
+================================================================================
+AUTONOMOUS VEHICLE FLEET — LONG-CONTEXT MEMORY PROFILE
+Document Type : Fleet Operational History & Active Status Record
+Asset ID      : assets/fleet_history.txt
+Maintained By : Fleet Operations Intelligence System (FOIS)
+Last Updated  : 2026-06-15T09:42:00Z
+Classification: INTERNAL — RESTRICTED — ENGINEERING AND OPS ONLY
+================================================================================
+
+PURPOSE
+-------
+This document serves as the authoritative long-context memory profile for the AV
+fleet program. It is consumed by orchestration agents to provide historical
+operational context when evaluating real-time telemetry, diagnosing anomalies,
+and generating compliance reports.
+
+Agents reading this profile MUST treat all entries as grounding context with
+higher precedence than general training knowledge. Fleet-specific known issues
+documented here take priority when interpreting ambiguous sensor data.
+
+================================================================================
+FLEET UNIT PROFILE
+Unit ID       : AV-FLEET-402
+Fleet Class   : Gen-3 Urban Autonomous Platform
+Vehicle Type  : Electric SUV — Level 4 Autonomy
+Chassis SN    : CH-402-GEN3-2024-7741
+Commission Date: 2024-08-12
+Home Depot    : West Bay Operations Centre, Bay 14
+Assigned Region: Urban Grid Zone 7 (downtown core + waterfront district)
+Primary Operator: Fleet Ops — Shift Lead, Zone 7
+================================================================================
+
+--- SOFTWARE CONFIGURATION ---
+
+Current Software Stack:
+  Core Autonomy Stack   : v4.2.1-beta   ← ACTIVE BETA — see patch notes below
+  Perception Module     : v4.2.1-beta
+  Sensor Fusion Engine  : v4.1.8-stable
+  Path Planning         : v4.2.0-stable
+  CAN Bus Interface     : v3.9.2-stable
+  OTA Update Status     : PENDING — v4.2.2 scheduled, ETA 2026-06-28
+
+Beta Patch Details:
+  Patch ID    : PATCH-402-V421B
+  Branch      : release/4.2.x-beta
+  Deployed    : 2026-05-03T14:00:00Z
+  Scope       : AV-FLEET-402 only (isolated beta rollout, not fleet-wide)
+  Purpose     : Evaluate improved urban intersection decision latency (AV-REG-101)
+  Reviewer    : Senior Perception Engineer — pending sign-off
+
+--- ACTIVE KNOWN ISSUE ---
+
+BUG ID          : BUG-CAM-402-WET-007
+Status          : ACTIVE — UNRESOLVED
+Severity        : HIGH
+Introduced In   : v4.2.1-beta (PATCH-402-V421B)
+Discovered      : 2026-05-11T07:18:00Z (post-deployment field observation)
+Reported By     : Fleet Ops, Zone 7 — Shift Lead
+Assigned To     : Perception Engineering Team — Camera Pipeline
+ETA Fix         : v4.2.2 (scheduled 2026-06-28)
+Workaround      : Active (see AV-REG-102 Wet-Road Camera Reflection Protocol)
+
+DESCRIPTION:
+  AV-FLEET-402 exhibits a camera reflection processing anomaly exclusively on
+  wet road surfaces. When road_surface=WET is detected by the environmental
+  context module, the forward camera array produces specular reflection artefacts
+  that are incorrectly classified as phantom objects by the perception module's
+  v4.2.1-beta object detection pipeline.
+
+  Root cause (preliminary): The beta patch modified the image pre-processing
+  normalisation layer to improve low-light intersection detection. An unintended
+  side effect is that the normalisation curve amplifies specular highlight regions
+  on wet asphalt, causing the downstream YOLO-based detector to generate false
+  positive bounding boxes for non-existent objects (primarily at road level,
+  typically classified as 'movable_object.barrier' or 'vehicle.car').
+
+  Impact profile:
+    - Condition trigger : road_surface=WET; precipitation_level ≥ LIGHT
+    - Affected sensors  : Forward camera array (cam_front_left, cam_front_right,
+                          cam_front_centre). Surround cameras NOT affected.
+    - Phantom object rate: ~12–18 false positive objects per wet-road scene
+    - Confidence range  : False positives appear with confidence 0.62–0.74
+                          (below the 0.75 human-reviewed threshold, but above
+                          the 0.50 autonomous action threshold — SAFETY CRITICAL)
+    - AV-REG-101 impact : Phantom objects near intersections can trigger spurious
+                          emergency decelerations, causing AV-REG-101 compliance
+                          records to show false velocity anomalies
+    - AV-REG-102 impact : Does NOT trigger sensor obstruction alerts (sensor hardware
+                          is functioning; the bug is in software processing)
+
+  Validation agent note:
+    When analysing telemetry from AV-FLEET-402 where road_surface=WET:
+      1. Apply AV-REG-102 confidence penalty multiplier (1.5×) to all cam_front_*
+         detections before evaluating against detection thresholds.
+      2. Flag any 'movable_object.barrier' or 'vehicle.car' detection with
+         confidence 0.62–0.74 as SUSPECT_PHANTOM — do not count as true positive.
+      3. Do NOT raise AV-REG-102 Level 2/3 alerts solely on the basis of phantom
+         objects from this bug — cross-validate with LiDAR before escalating.
+      4. Flag the scene with tag: BUG-CAM-402-WET-007 for engineering review.
+
+--- OPERATIONAL HISTORY SUMMARY ---
+
+Total Distance (lifetime)   : 41,820 km
+Total Autonomous Hours      : 1,247 h
+Incidents (lifetime)        : 3 (0 CRITICAL, 1 HIGH, 2 LOW)
+Last Preventive Maintenance : 2026-05-28 (Bay 14, West Bay Ops Centre)
+Next Scheduled Maintenance  : 2026-07-10
+
+Incident Log (last 90 days):
+  INC-402-2026-03 | 2026-05-14 | Severity: HIGH
+    Type    : Spurious emergency deceleration at controlled intersection
+    Location: Grid Zone 7, Sector 12-B, Junction 7-44
+    Cause   : BUG-CAM-402-WET-007 (phantom object classified as vehicle.car
+              at confidence 0.68, road_surface=WET, precipitation=MODERATE)
+    Outcome : Vehicle decelerated from 22 km/h to 8 km/h over 3.2 s.
+              No collision. No human injury. Rear approach vehicle braked safely.
+              Flagged for engineering review. AV-REG-101 record adjusted post-hoc.
+    Status  : CLOSED — root cause linked to active bug. Monitoring continues.
+
+  INC-402-2026-02 | 2026-04-09 | Severity: LOW
+    Type    : GNSS accuracy degraded (urban canyon)
+    Location: Grid Zone 7, Sector 5-A, underpass approach
+    Cause   : Satellite count dropped to 3 (MOT: ≥4). Duration: 8 seconds.
+    Outcome : Fallback to HD-map + IMU dead reckoning. No unsafe behaviour.
+    Status  : CLOSED — expected urban canyon behaviour, no bug.
+
+  INC-402-2026-01 | 2026-03-21 | Severity: LOW
+    Type    : LiDAR point density below MOT for 2 consecutive sweeps
+    Location: Grid Zone 7, Sector 9-C (construction zone, heavy dust)
+    Cause   : Construction debris particulate caused temporary attenuation.
+    Outcome : Level 1 obstruction alert raised. Speed reduced automatically.
+              Sensor recovered after 4 sweeps. AV-REG-102 compliance action taken.
+    Status  : CLOSED — environmental, no hardware defect.
+
+--- FLEET COMPARISON CONTEXT ---
+
+Peer units in Zone 7 (for validation agent baseline reference):
+  AV-FLEET-399 : v4.1.8-stable | No active bugs | 38,240 km lifetime
+  AV-FLEET-400 : v4.1.8-stable | No active bugs | 29,610 km lifetime
+  AV-FLEET-401 : v4.2.0-stable | No active bugs | 15,390 km lifetime
+  AV-FLEET-402 : v4.2.1-beta   | BUG-CAM-402-WET-007 ACTIVE | 41,820 km lifetime
+  AV-FLEET-403 : v4.2.0-stable | No active bugs | 8,150 km lifetime
+
+Note: AV-FLEET-402 is the ONLY unit in Zone 7 running beta software. When
+comparing fleet-wide statistics, AV-FLEET-402 wet-road camera metrics should
+be treated as anomalous and excluded from baseline calculations until BUG-CAM-402-WET-007
+is resolved and v4.2.2 is validated.
+
+================================================================================
+END OF FLEET PROFILE — AV-FLEET-402
+================================================================================
+DOCUMENT CONTROL
+Version  Date        Change
+1.0.0    2026-05-03  Unit created, beta patch deployed
+1.1.0    2026-05-11  BUG-CAM-402-WET-007 logged; operational notes added
+1.2.0    2026-05-14  INC-402-2026-03 added; validation agent notes updated
+1.3.0    2026-06-15  Incident log updated; maintenance dates refreshed
+================================================================================
+END OF DOCUMENT — assets/fleet_history.txt
+================================================================================

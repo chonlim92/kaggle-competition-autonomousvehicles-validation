@@ -35,7 +35,7 @@ pii_redactor_tool = FunctionTool(func=clean_pii)
 
 
 from src.skills.validation.scripts import validate_telemetry, validate_labels, generate_report
-from src.skills.knowledge_retrieval import retrieve_knowledge
+from src.skills.knowledge_retrieval.scripts.knowledge_retrieval import retrieve_knowledge
 
 validate_telemetry_tool = FunctionTool(func=validate_telemetry)
 validate_labels_tool = FunctionTool(func=validate_labels)
