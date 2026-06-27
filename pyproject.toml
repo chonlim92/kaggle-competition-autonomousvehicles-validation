@@ -7,7 +7,7 @@ readme = "README.md"
 license = { text = "MIT" }
 
 dependencies = [
-    "google-adk==0.1.0",
+    "google-adk==2.3.0",
     # Fix ADK dependency conflict (relaxed to >=0.48b0)
     "opentelemetry-semantic-conventions>=0.48b0",
     # Required implicitly by google-adk
